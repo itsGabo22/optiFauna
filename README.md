@@ -24,7 +24,21 @@
 
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository for **OptiFauna**.
+
+## Repartición de Trabajo del Proyecto
+
+El desarrollo del backend de OptiFauna se divide en los siguientes módulos para los integrantes del equipo:
+
+- **Gabriel**:
+  - Módulo de Animales (`AnimalsModule`)
+  - Módulo de Salud/Sanidad (`HealthModule`)
+- **Cristian**:
+  - Módulo de Reproducción (`ReproductionModule`)
+  - Módulo de Nutrición (`NutritionModule`)
+- **Carlos**:
+  - Módulo de Finanzas (`FinanceModule`)
+  - Módulo de Fincas/Configuración (`FarmsModule`)
 
 ## Project setup
 
