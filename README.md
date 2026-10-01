@@ -30,13 +30,13 @@
 
 El desarrollo del backend de OptiFauna se divide en los siguientes módulos para los integrantes del equipo:
 
-- **Gabriel**:
+- **Cristian**:
   - Módulo de Animales (`AnimalsModule`)
   - Módulo de Salud/Sanidad (`HealthModule`)
-- **Cristian**:
+- **Carlos**:
   - Módulo de Reproducción (`ReproductionModule`)
   - Módulo de Nutrición (`NutritionModule`)
-- **Carlos**:
+- **Gabriel**:
   - Módulo de Finanzas (`FinanceModule`)
   - Módulo de Fincas/Configuración (`FarmsModule`)
 
