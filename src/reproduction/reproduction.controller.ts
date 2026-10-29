@@ -1,4 +1,4 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param } from '@nestjs/common';
 import { ReproductionService } from './reproduction.service';
 import { InseminationDto } from './dto/insemination.dto';
 import { PregnancyCheckDto } from './dto/pregnancy-check.dto';
@@ -15,13 +15,16 @@ export class ReproductionController {
 
   @Post('pregnancy-check')
   async logPregnancyCheck(@Body() pregnancyCheckDto: PregnancyCheckDto) {
-    // Structural implementation: controller delegates business operations to service
-    // In a real implementation this would call a method like logPregnancyCheck on the service
-    return { message: 'Pregnancy check structurally logged', data: pregnancyCheckDto };
+    return this.reproductionService.logPregnancyCheck(pregnancyCheckDto);
   }
 
   @Post('birth')
   async logBirth(@Body() birthDto: BirthDto) {
     return this.reproductionService.logBirth(birthDto);
+  }
+
+  @Get('due-date/:animalId')
+  async getDueDate(@Param('animalId') animalId: string) {
+    return this.reproductionService.calculateDueDates(animalId);
   }
 }

@@ -17,6 +17,6 @@ export class FarmsController {
     @Param('id') farmId: string,
     @Body() assignWorkerDto: AssignWorkerDto,
   ) {
-    return this.farmsService.assignWorker(farmId, assignWorkerDto.userId);
+    return this.farmsService.assignWorker(farmId, assignWorkerDto);
   }
 }
