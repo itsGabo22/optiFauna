@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body } from '@nestjs/common';
+import { Controller, Post, Get, Body, Query } from '@nestjs/common';
 import { NutritionService } from './nutrition.service';
 import { DietDto } from './dto/diet.dto';
 
@@ -12,7 +12,12 @@ export class NutritionController {
   }
 
   @Get('inventory')
-  async getInventory() {
-    return { inventory: 'Structural inventory data' };
+  async getInventory(@Query('farmId') farmId?: string) {
+    return this.nutritionService.getInventory(farmId);
+  }
+
+  @Get('consumption')
+  async getConsumption(@Query('farmId') farmId: string) {
+    return this.nutritionService.calculateConsumption(farmId);
   }
 }

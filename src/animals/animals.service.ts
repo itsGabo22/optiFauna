@@ -19,7 +19,9 @@ export class AnimalsService {
 
   async getAnimals(farmId?: string, page: number = 1): Promise<{ data: Animal[], total: number }> {
     const limit = 10;
+    const where = farmId ? { farmId } : {};
     const [data, total] = await this.animalRepository.findAndCount({
+      where,
       skip: (page - 1) * limit,
       take: limit,
     });
