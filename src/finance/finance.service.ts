@@ -16,14 +16,19 @@ export class FinanceService {
     private readonly financeRepository: Repository<FinanceRecord>,
   ) {}
 
-  async registerYield(yieldDto: YieldDto): Promise<FinanceRecord> {
+  async registerMilkProduction(yieldDto: YieldDto): Promise<FinanceRecord> {
+    const amount =
+      Math.round(yieldDto.liters * yieldDto.pricePerLiter * 100) / 100;
     const record = this.financeRepository.create({
+      farmId: yieldDto.farmId,
       animalId: yieldDto.animalId,
       recordType: FinanceRecordType.YIELD,
       category: FinanceCategory.MILK_SALE,
-      amount: yieldDto.productionAmount,
+      quantity: yieldDto.liters,
+      unitPrice: yieldDto.pricePerLiter,
+      amount,
       date: yieldDto.date,
-      description: 'Yield production recorded',
+      description: yieldDto.description ?? 'Milk production recorded',
     });
     return this.financeRepository.save(record);
   }

@@ -7,9 +7,14 @@ import { ExpenseDto } from './dto/expense.dto';
 export class FinanceController {
   constructor(private readonly financeService: FinanceService) {}
 
+  @Post('milk')
+  async registerMilkProduction(@Body() yieldDto: YieldDto) {
+    return this.financeService.registerMilkProduction(yieldDto);
+  }
+
   @Post('yields')
   async registerYield(@Body() yieldDto: YieldDto) {
-    return this.financeService.registerYield(yieldDto);
+    return this.financeService.registerMilkProduction(yieldDto);
   }
 
   @Post('expenses')
