@@ -1,6 +1,7 @@
 import { Controller, Post, Get, Body, Query } from '@nestjs/common';
 import { NutritionService } from './nutrition.service';
 import { DietDto } from './dto/diet.dto';
+import { CreateFeedInventoryDto } from './dto/inventory.dto';
 
 @Controller('nutrition')
 export class NutritionController {
@@ -9,6 +10,11 @@ export class NutritionController {
   @Post('diets')
   async assignDiet(@Body() dietDto: DietDto) {
     return this.nutritionService.assignDiet(dietDto);
+  }
+
+  @Post('inventory')
+  async createFeedItem(@Body() dto: CreateFeedInventoryDto) {
+    return this.nutritionService.createFeedItem(dto);
   }
 
   @Get('inventory')

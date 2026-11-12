@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { DietDto } from './dto/diet.dto';
+import { CreateFeedInventoryDto } from './dto/inventory.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { NutritionRecord } from './entities/nutrition-record.entity';
 import { FeedInventory } from './entities/feed-inventory.entity';
+import { todayIso } from '../common/utils/date.utils';
 
 @Injectable()
 export class NutritionService {
@@ -39,6 +41,14 @@ export class NutritionService {
       calculatedTotalDailyKg: totalDailyKg,
       diets: records,
     };
+  }
+
+  async createFeedItem(dto: CreateFeedInventoryDto): Promise<FeedInventory> {
+    const item = this.feedInventoryRepository.create({
+      ...dto,
+      lastRestockDate: dto.currentStockKg > 0 ? todayIso() : undefined,
+    });
+    return this.feedInventoryRepository.save(item);
   }
 
   async getInventory(farmId?: string): Promise<FeedInventory[]> {
