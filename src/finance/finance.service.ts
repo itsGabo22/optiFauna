@@ -3,7 +3,11 @@ import { YieldDto } from './dto/yield.dto';
 import { ExpenseDto } from './dto/expense.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { FinanceRecord, FinanceRecordType, FinanceCategory } from './entities/finance-record.entity';
+import {
+  FinanceRecord,
+  FinanceRecordType,
+  FinanceCategory,
+} from './entities/finance-record.entity';
 
 @Injectable()
 export class FinanceService {
@@ -27,7 +31,8 @@ export class FinanceService {
   async registerExpense(expenseDto: ExpenseDto): Promise<FinanceRecord> {
     const record = this.financeRepository.create({
       recordType: FinanceRecordType.EXPENSE,
-      category: (expenseDto.category as FinanceCategory) || FinanceCategory.OTHER,
+      category:
+        (expenseDto.category as FinanceCategory) || FinanceCategory.OTHER,
       amount: expenseDto.amount,
       date: expenseDto.date,
       description: 'Operational expense recorded',
@@ -54,7 +59,9 @@ export class FinanceService {
 
     const netProfit = totalYield - totalExpense;
     const roiPercentage =
-      totalExpense > 0 ? ((netProfit / totalExpense) * 100).toFixed(2) : '100.00';
+      totalExpense > 0
+        ? ((netProfit / totalExpense) * 100).toFixed(2)
+        : '100.00';
 
     return {
       animalId,
