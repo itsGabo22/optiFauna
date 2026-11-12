@@ -1,9 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateAnimalDto } from './dto/create-animal.dto';
 import { UpdateAnimalDto } from './dto/update-animal.dto';
+import { QueryAnimalsDto } from './dto/query-animals.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Animal } from './entities/animal.entity';
+import { FindOptionsWhere, Repository } from 'typeorm';
+import { Animal, AnimalStatus } from './entities/animal.entity';
 
 @Injectable()
 export class AnimalsService {
@@ -18,15 +19,32 @@ export class AnimalsService {
   }
 
   async getAnimals(
-    farmId?: string,
-    page: number = 1,
+    query: QueryAnimalsDto = {},
   ): Promise<{ data: Animal[]; total: number }> {
     const limit = 10;
-    const where = farmId ? { farmId } : {};
+    const page = query.page ?? 1;
+    const where: FindOptionsWhere<Animal> = {};
+
+    if (query.farmId) {
+      where.farmId = query.farmId;
+    }
+    if (query.sex) {
+      where.sex = query.sex;
+    }
+    if (query.species) {
+      where.species = query.species;
+    }
+    if (!query.status) {
+      where.status = AnimalStatus.ACTIVE;
+    } else if (query.status !== 'ALL') {
+      where.status = query.status;
+    }
+
     const [data, total] = await this.animalRepository.findAndCount({
       where,
       skip: (page - 1) * limit,
       take: limit,
+      order: { createdAt: 'DESC' },
     });
     return { data, total };
   }
