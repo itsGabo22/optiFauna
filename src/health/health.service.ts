@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { VaccineDto } from './dto/vaccine.dto';
 import { TreatmentDto } from './dto/treatment.dto';
+import { DewormingDto } from './dto/deworming.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
@@ -54,6 +55,24 @@ export class HealthService {
       veterinarian: treatmentDto.veterinarian,
       description:
         treatmentDto.description ?? `Treatment: ${treatmentDto.treatmentName}`,
+    });
+    return this.healthRecordRepository.save(record);
+  }
+
+  async registerDeworming(dewormingDto: DewormingDto): Promise<HealthRecord> {
+    const record = this.healthRecordRepository.create({
+      animalId: dewormingDto.animalId,
+      farmId: dewormingDto.farmId,
+      type: HealthRecordType.DEWORMING,
+      title: dewormingDto.medication,
+      medication: dewormingDto.medication,
+      dosage: dewormingDto.dosage,
+      cost: dewormingDto.cost,
+      date: dewormingDto.date,
+      nextDueDate: dewormingDto.nextDueDate,
+      veterinarian: dewormingDto.veterinarian,
+      description:
+        dewormingDto.description ?? `Deworming: ${dewormingDto.medication}`,
     });
     return this.healthRecordRepository.save(record);
   }
