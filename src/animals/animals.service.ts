@@ -1,7 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateAnimalDto } from './dto/create-animal.dto';
 import { UpdateAnimalDto } from './dto/update-animal.dto';
 import { QueryAnimalsDto } from './dto/query-animals.dto';
+import { ChangeStatusDto } from './dto/change-status.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, Repository } from 'typeorm';
 import { Animal, AnimalStatus } from './entities/animal.entity';
@@ -63,6 +68,20 @@ export class AnimalsService {
   ): Promise<Animal> {
     const animal = await this.findByTagId(tagId);
     Object.assign(animal, updateAnimalDto);
+    return this.animalRepository.save(animal);
+  }
+
+  async changeStatus(
+    tagId: string,
+    changeStatusDto: ChangeStatusDto,
+  ): Promise<Animal> {
+    if (changeStatusDto.status === AnimalStatus.ACTIVE) {
+      throw new BadRequestException('status cannot be ACTIVE');
+    }
+    const animal = await this.findByTagId(tagId);
+    animal.status = changeStatusDto.status;
+    animal.statusChangedAt = changeStatusDto.date;
+    animal.statusReason = changeStatusDto.reason;
     return this.animalRepository.save(animal);
   }
 }
