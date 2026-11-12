@@ -24,6 +24,16 @@ export enum PregnancyResult {
   CONFIRMED_NEGATIVE = 'CONFIRMED_NEGATIVE',
 }
 
+export enum InseminationType {
+  ARTIFICIAL = 'ARTIFICIAL',
+  NATURAL = 'NATURAL',
+}
+
+export enum OffspringSex {
+  MALE = 'MALE',
+  FEMALE = 'FEMALE',
+}
+
 @Entity('reproduction_records')
 export class ReproductionRecord {
   @PrimaryGeneratedColumn('uuid')
@@ -48,8 +58,12 @@ export class ReproductionRecord {
   @Column({ type: 'date' })
   eventDate: string;
 
-  @Column({ nullable: true })
-  inseminationType?: string; // e.g. ARTIFICIAL, NATURAL
+  @Column({
+    type: 'enum',
+    enum: InseminationType,
+    nullable: true,
+  })
+  inseminationType?: InseminationType;
 
   @Column({ nullable: true })
   sireIdOrSemen?: string; // Bull ID or Semen Straw code
@@ -67,8 +81,12 @@ export class ReproductionRecord {
   @Column({ nullable: true })
   offspringTagId?: string;
 
-  @Column({ nullable: true })
-  offspringSex?: string;
+  @Column({
+    type: 'enum',
+    enum: OffspringSex,
+    nullable: true,
+  })
+  offspringSex?: OffspringSex;
 
   @Column({ type: 'text', nullable: true })
   details?: string;

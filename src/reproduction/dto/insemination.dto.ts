@@ -1,4 +1,11 @@
-import { IsString, IsNotEmpty, IsDateString } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsDateString,
+  IsEnum,
+  IsOptional,
+} from 'class-validator';
+import { InseminationType } from '../entities/reproduction-record.entity';
 
 export class InseminationDto {
   @IsString()
@@ -12,4 +19,12 @@ export class InseminationDto {
   @IsString()
   @IsNotEmpty()
   bullIdOrSemen: string;
+
+  @IsEnum(InseminationType)
+  @IsNotEmpty()
+  inseminationType: InseminationType;
+
+  @IsString()
+  @IsOptional()
+  technician?: string;
 }

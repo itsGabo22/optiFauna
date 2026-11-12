@@ -1,4 +1,11 @@
-import { IsString, IsNotEmpty, IsDateString } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsDateString,
+  IsEnum,
+  IsOptional,
+} from 'class-validator';
+import { OffspringSex } from '../entities/reproduction-record.entity';
 
 export class BirthDto {
   @IsString()
@@ -9,7 +16,15 @@ export class BirthDto {
   @IsNotEmpty()
   date: string;
 
-  @IsString()
+  @IsEnum(OffspringSex)
   @IsNotEmpty()
-  calfGender: string;
+  calfGender: OffspringSex;
+
+  @IsString()
+  @IsOptional()
+  offspringTagId?: string;
+
+  @IsString()
+  @IsOptional()
+  notes?: string;
 }

@@ -27,10 +27,12 @@ export class ReproductionService {
       animalId: inseminationDto.animalId,
       eventType: ReproductionEventType.INSEMINATION,
       eventDate: inseminationDto.date,
+      inseminationType: inseminationDto.inseminationType,
       sireIdOrSemen: inseminationDto.bullIdOrSemen,
+      technician: inseminationDto.technician,
       estimatedDueDate: estimatedDueDate.toISOString().split('T')[0],
       pregnancyResult: PregnancyResult.PENDING,
-      details: `Insemination with sire/straw: ${inseminationDto.bullIdOrSemen}`,
+      details: `${inseminationDto.inseminationType} insemination with sire/straw: ${inseminationDto.bullIdOrSemen}`,
     });
 
     return this.reproductionRepository.save(record);
@@ -76,7 +78,10 @@ export class ReproductionService {
       eventType: ReproductionEventType.BIRTH,
       eventDate: birthDto.date,
       offspringSex: birthDto.calfGender,
-      details: `Birth of calf (${birthDto.calfGender}) recorded`,
+      offspringTagId: birthDto.offspringTagId,
+      details:
+        birthDto.notes ??
+        `Birth of ${birthDto.calfGender.toLowerCase()} calf recorded`,
     });
 
     return this.reproductionRepository.save(record);
