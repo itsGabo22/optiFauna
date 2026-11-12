@@ -62,6 +62,12 @@ export class Animal {
   })
   status: AnimalStatus;
 
+  @Column({ type: 'date', nullable: true })
+  statusChangedAt?: string;
+
+  @Column({ nullable: true })
+  statusReason?: string;
+
   @Column({ nullable: true })
   farmId?: string;
 
