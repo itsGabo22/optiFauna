@@ -8,6 +8,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { Farm } from '../../farms/entities/farm.entity';
+import { Animal } from '../../animals/entities/animal.entity';
 
 @Entity('nutrition_records')
 export class NutritionRecord {
@@ -24,8 +25,16 @@ export class NutritionRecord {
   @JoinColumn({ name: 'farmId' })
   farm?: Farm;
 
-  @Column()
-  animalGroupId: string;
+  /** A diet targets either one animal (animalId) or a group/lot (animalGroupId). */
+  @Column({ nullable: true })
+  animalId?: string;
+
+  @ManyToOne(() => Animal, { nullable: true, onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'animalId' })
+  animal?: Animal;
+
+  @Column({ nullable: true })
+  animalGroupId?: string;
 
   @Column()
   dietName: string;
