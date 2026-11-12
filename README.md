@@ -197,6 +197,7 @@ Sigue lo que ya existe en el proyecto. Si tienes dudas, copia la forma de `src/a
 src/<modulo>/
 ├── dto/                  # Un archivo por DTO: <nombre>.dto.ts
 ├── entities/             # Un archivo por entidad: <nombre>.entity.ts
+├── interfaces/           # Tipos de respuesta de reportes/cálculos: <modulo>-reports.interface.ts
 ├── <modulo>.controller.ts
 ├── <modulo>.module.ts
 ├── <modulo>.service.ts
@@ -217,6 +218,7 @@ src/<modulo>/
 
 - `@PrimaryGeneratedColumn('uuid') id: string;`
 - Relaciones: columna explícita `xxxId` + `@ManyToOne` + `@JoinColumn({ name: 'xxxId' })`, como ya está en todas las entidades.
+- Para cargar una relación en una consulta usa la **forma de objeto**: `relations: { animal: true }`. La forma `relations: ['animal']` **no compila** con la versión de TypeORM del proyecto. Para filtrar por un campo de la relación: `where: { animal: { farmId } }`.
 - Dinero y pesos: `type: 'decimal'`. **Postgres devuelve los `decimal` como `string`**; cuando los sumes o multipliques usa siempre `Number(valor)`.
 - Columnas nuevas sobre tablas existentes: `nullable: true` o `default`.
 - `createdAt` y `updatedAt` con `@CreateDateColumn()` / `@UpdateDateColumn()` en todas las entidades.
@@ -226,7 +228,8 @@ src/<modulo>/
 - La lógica va en el servicio. El controlador solo recibe, valida y delega.
 - Si no se encuentra un recurso: `throw new NotFoundException('Animal with id X not found')`.
 - Si la operación no es válida (p. ej. stock insuficiente): `throw new BadRequestException('mensaje claro')`.
-- Los métodos que devuelven cálculos **no devuelven `Promise<any>`**: define una `interface` o `type` en el mismo archivo del servicio (o en `dto/`) con la forma exacta de la respuesta.
+- Los métodos que devuelven cálculos **no devuelven `Promise<any>`**: define una `interface` o `type` en `src/<modulo>/interfaces/<modulo>-reports.interface.ts` con la forma exacta de la respuesta (ejemplo: `src/reproduction/interfaces/reproduction-reports.interface.ts`).
+- Para fechas usa las utilidades de `src/common/utils/date.utils.ts` (`todayIso`, `addDays`, `daysBetween`, `overlapDays`, `toIsoDate`). No hagas aritmética con `new Date()` a mano. En `src/common/` solo van funciones puras sin dependencias de ningún módulo.
 - Rutas en inglés, en minúsculas y kebab-case: `/reproduction/open-days/:animalId`, no `/reproduccion/diasAbiertos`.
 - Filtros opcionales por query string: `@Query('farmId') farmId?: string`.
 - Para listar: ordena siempre por fecha descendente (`order: { date: 'DESC' }`).
