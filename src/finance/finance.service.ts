@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { YieldDto } from './dto/yield.dto';
 import { ExpenseDto } from './dto/expense.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -17,8 +17,7 @@ export class FinanceService {
   ) {}
 
   async registerMilkProduction(yieldDto: YieldDto): Promise<FinanceRecord> {
-    const amount =
-      Math.round(yieldDto.liters * yieldDto.pricePerLiter * 100) / 100;
+    const amount = this.round2(yieldDto.liters * yieldDto.pricePerLiter);
     const record = this.financeRepository.create({
       farmId: yieldDto.farmId,
       animalId: yieldDto.animalId,
@@ -34,15 +33,37 @@ export class FinanceService {
   }
 
   async registerExpense(expenseDto: ExpenseDto): Promise<FinanceRecord> {
+    const computedAmount =
+      expenseDto.amount !== undefined
+        ? expenseDto.amount
+        : expenseDto.quantity !== undefined &&
+            expenseDto.unitPrice !== undefined
+          ? this.round2(expenseDto.quantity * expenseDto.unitPrice)
+          : null;
+
+    if (computedAmount === null) {
+      throw new BadRequestException(
+        'Either amount or both quantity and unitPrice are required',
+      );
+    }
+
     const record = this.financeRepository.create({
+      farmId: expenseDto.farmId,
+      animalId: expenseDto.animalId,
       recordType: FinanceRecordType.EXPENSE,
-      category:
-        (expenseDto.category as FinanceCategory) || FinanceCategory.OTHER,
-      amount: expenseDto.amount,
+      category: expenseDto.category,
+      amount: computedAmount,
+      quantity: expenseDto.quantity,
+      unitPrice: expenseDto.unitPrice,
       date: expenseDto.date,
-      description: 'Operational expense recorded',
+      description: expenseDto.description ?? 'Operational expense recorded',
+      receiptNumber: expenseDto.receiptNumber,
     });
     return this.financeRepository.save(record);
+  }
+
+  private round2(value: number): number {
+    return Math.round(value * 100) / 100;
   }
 
   async calculateAnimalProfitability(animalId: string): Promise<any> {
