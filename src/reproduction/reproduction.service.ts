@@ -5,8 +5,15 @@ import { BirthDto } from './dto/birth.dto';
 import { HeatDto } from './dto/heat.dto';
 import { AbortionDto } from './dto/abortion.dto';
 import { HistoryQueryDto } from './dto/history-query.dto';
+import { UpcomingBirthsQueryDto } from './dto/upcoming-births-query.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { LessThanOrEqual, Repository } from 'typeorm';
+import {
+  Between,
+  In,
+  LessThanOrEqual,
+  MoreThanOrEqual,
+  Repository,
+} from 'typeorm';
 import {
   ReproductionRecord,
   ReproductionEventType,
@@ -17,8 +24,14 @@ import {
   OPEN_DAYS_TARGET,
   OpenDaysReport,
   ReproductiveStatusReport,
+  UpcomingBirth,
 } from './interfaces/reproduction-reports.interface';
-import { daysBetween, todayIso, toIsoDate } from '../common/utils/date.utils';
+import {
+  addDays,
+  daysBetween,
+  todayIso,
+  toIsoDate,
+} from '../common/utils/date.utils';
 
 @Injectable()
 export class ReproductionService {
@@ -262,6 +275,56 @@ export class ReproductionService {
       isClosed: conception !== undefined,
       exceedsTarget: openDays > OPEN_DAYS_TARGET,
     };
+  }
+
+  async getUpcomingBirths(
+    query: UpcomingBirthsQueryDto = {},
+  ): Promise<UpcomingBirth[]> {
+    const today = todayIso();
+    const until = addDays(today, query.days ?? 30);
+
+    const candidates = await this.reproductionRepository.find({
+      where: {
+        eventType: ReproductionEventType.INSEMINATION,
+        pregnancyResult: PregnancyResult.CONFIRMED_POSITIVE,
+        estimatedDueDate: Between(today, until),
+        ...(query.farmId ? { animal: { farmId: query.farmId } } : {}),
+      },
+      relations: { animal: true },
+      order: { estimatedDueDate: 'ASC' },
+    });
+
+    const upcoming: UpcomingBirth[] = [];
+    for (const record of candidates) {
+      // Skip pregnancies that already ended (calving or abortion registered
+      // on or after the insemination date).
+      const alreadyEnded = await this.reproductionRepository.count({
+        where: {
+          animalId: record.animalId,
+          eventType: In([
+            ReproductionEventType.BIRTH,
+            ReproductionEventType.ABORTION,
+          ]),
+          eventDate: MoreThanOrEqual(record.eventDate),
+        },
+      });
+      if (alreadyEnded > 0) {
+        continue;
+      }
+
+      const estimatedDueDate = toIsoDate(record.estimatedDueDate as string);
+      upcoming.push({
+        animalId: record.animalId,
+        tagId: record.animal?.tagId ?? null,
+        farmId: record.animal?.farmId ?? null,
+        inseminationDate: toIsoDate(record.eventDate),
+        estimatedDueDate,
+        daysToDueDate: daysBetween(today, estimatedDueDate),
+        sireIdOrSemen: record.sireIdOrSemen ?? null,
+      });
+    }
+
+    return upcoming;
   }
 
   private withStatus(
