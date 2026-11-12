@@ -1,4 +1,11 @@
-import { IsString, IsNotEmpty, IsDateString, IsOptional, IsEnum, IsNumber } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsDateString,
+  IsOptional,
+  IsEnum,
+  IsNumber,
+} from 'class-validator';
 import { AnimalSex, AnimalStatus } from '../entities/animal.entity';
 
 export class CreateAnimalDto {
