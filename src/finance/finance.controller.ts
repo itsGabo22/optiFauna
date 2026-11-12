@@ -1,9 +1,11 @@
 import { Controller, Post, Get, Body, Param, Query } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { FinanceService } from './finance.service';
 import { YieldDto } from './dto/yield.dto';
 import { ExpenseDto } from './dto/expense.dto';
 import { AnimalSaleDto } from './dto/animal-sale.dto';
 
+@ApiTags('finance')
 @Controller('finance')
 export class FinanceController {
   constructor(private readonly financeService: FinanceService) {}

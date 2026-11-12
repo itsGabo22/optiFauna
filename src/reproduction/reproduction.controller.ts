@@ -1,4 +1,5 @@
 import { Controller, Post, Get, Body, Param, Query } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { ReproductionService } from './reproduction.service';
 import { InseminationDto } from './dto/insemination.dto';
 import { PregnancyCheckDto } from './dto/pregnancy-check.dto';
@@ -8,6 +9,7 @@ import { AbortionDto } from './dto/abortion.dto';
 import { HistoryQueryDto } from './dto/history-query.dto';
 import { UpcomingBirthsQueryDto } from './dto/upcoming-births-query.dto';
 
+@ApiTags('reproduction')
 @Controller('reproduction')
 export class ReproductionController {
   constructor(private readonly reproductionService: ReproductionService) {}

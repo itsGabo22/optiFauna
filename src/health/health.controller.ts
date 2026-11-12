@@ -1,4 +1,5 @@
 import { Controller, Post, Get, Body, Query, Param } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { HealthService } from './health.service';
 import { VaccineDto } from './dto/vaccine.dto';
 import { TreatmentDto } from './dto/treatment.dto';
@@ -6,6 +7,7 @@ import { DewormingDto } from './dto/deworming.dto';
 import { HealthHistoryQueryDto } from './dto/health-history-query.dto';
 import { UpcomingHealthQueryDto } from './dto/upcoming-health-query.dto';
 
+@ApiTags('health')
 @Controller('health')
 export class HealthController {
   constructor(private readonly healthService: HealthService) {}

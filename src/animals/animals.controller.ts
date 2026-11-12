@@ -8,12 +8,14 @@ import {
   Param,
   Query,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { AnimalsService } from './animals.service';
 import { CreateAnimalDto } from './dto/create-animal.dto';
 import { UpdateAnimalDto } from './dto/update-animal.dto';
 import { QueryAnimalsDto } from './dto/query-animals.dto';
 import { ChangeStatusDto } from './dto/change-status.dto';
 
+@ApiTags('animals')
 @Controller('animals')
 export class AnimalsController {
   constructor(private readonly animalsService: AnimalsService) {}

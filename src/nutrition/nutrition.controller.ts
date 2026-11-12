@@ -1,10 +1,12 @@
 import { Controller, Post, Get, Body, Query, Param } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { NutritionService } from './nutrition.service';
 import { DietDto } from './dto/diet.dto';
 import { CreateFeedInventoryDto } from './dto/inventory.dto';
 import { StockMovementDto } from './dto/stock-movement.dto';
 import { DietsQueryDto } from './dto/diets-query.dto';
 
+@ApiTags('nutrition')
 @Controller('nutrition')
 export class NutritionController {
   constructor(private readonly nutritionService: NutritionService) {}
