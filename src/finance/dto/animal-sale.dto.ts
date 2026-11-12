@@ -32,4 +32,3 @@ export class AnimalSaleDto {
   @IsOptional()
   receiptNumber?: string;
 }
-

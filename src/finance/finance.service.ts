@@ -3,7 +3,7 @@ import { YieldDto } from './dto/yield.dto';
 import { ExpenseDto } from './dto/expense.dto';
 import { AnimalSaleDto } from './dto/animal-sale.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, Repository } from 'typeorm';
+import { Between, IsNull, Repository } from 'typeorm';
 import {
   FinanceRecord,
   FinanceRecordType,
@@ -12,8 +12,10 @@ import {
 import { NutritionService } from '../nutrition/nutrition.service';
 import { addDays, todayIso, toIsoDate } from '../common/utils/date.utils';
 import {
+  CategoryTotal,
   CostPerLiterReport,
   DatePeriod,
+  FinanceSummary,
 } from './interfaces/finance-reports.interface';
 
 @Injectable()
@@ -167,6 +169,77 @@ export class FinanceService {
       averagePricePerLiter,
       marginPerLiter,
     };
+  }
+
+  async getFarmSummary(
+    farmId?: string,
+    from?: string,
+    to?: string,
+  ): Promise<FinanceSummary> {
+    if (!farmId || !farmId.trim()) {
+      throw new BadRequestException('farmId query parameter is required');
+    }
+
+    const period = this.resolvePeriod(from, to);
+
+    const records = await this.financeRepository.find({
+      where: [
+        { farmId, date: Between(period.from, period.to) },
+        {
+          farmId: IsNull(),
+          animal: { farmId },
+          date: Between(period.from, period.to),
+        },
+      ],
+      relations: { animal: true },
+      order: { date: 'DESC', createdAt: 'DESC' },
+    });
+
+    let totalIncome = 0;
+    let totalExpenses = 0;
+    let litersProduced = 0;
+
+    const incomeMap = new Map<FinanceCategory, CategoryTotal>();
+    const expenseMap = new Map<FinanceCategory, CategoryTotal>();
+
+    for (const record of records) {
+      const amount = Number(record.amount) || 0;
+      if (record.recordType === FinanceRecordType.YIELD) {
+        totalIncome += amount;
+        this.addToCategoryMap(incomeMap, record.category, amount);
+        if (record.category === FinanceCategory.MILK_SALE) {
+          litersProduced += Number(record.quantity) || 0;
+        }
+      } else if (record.recordType === FinanceRecordType.EXPENSE) {
+        totalExpenses += amount;
+        this.addToCategoryMap(expenseMap, record.category, amount);
+      }
+    }
+
+    totalIncome = this.round2(totalIncome);
+    totalExpenses = this.round2(totalExpenses);
+
+    return {
+      farmId,
+      period,
+      totalIncome,
+      totalExpenses,
+      netResult: this.round2(totalIncome - totalExpenses),
+      incomeByCategory: Array.from(incomeMap.values()),
+      expensesByCategory: Array.from(expenseMap.values()),
+      litersProduced: this.round2(litersProduced),
+    };
+  }
+
+  private addToCategoryMap(
+    map: Map<FinanceCategory, CategoryTotal>,
+    category: FinanceCategory,
+    amount: number,
+  ): void {
+    const existing = map.get(category) ?? { category, total: 0, count: 0 };
+    existing.total = this.round2(existing.total + amount);
+    existing.count += 1;
+    map.set(category, existing);
   }
 
   async calculateAnimalProfitability(animalId: string): Promise<any> {

@@ -37,6 +37,15 @@ export class FinanceController {
     return this.financeService.calculateCostPerLiter(animalId, from, to);
   }
 
+  @Get('summary')
+  async getFarmSummary(
+    @Query('farmId') farmId?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    return this.financeService.getFarmSummary(farmId, from, to);
+  }
+
   @Get('roi/:animalId')
   async getRoi(@Param('animalId') animalId: string) {
     return this.financeService.calculateAnimalProfitability(animalId);
