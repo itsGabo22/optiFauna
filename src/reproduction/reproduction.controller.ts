@@ -49,6 +49,11 @@ export class ReproductionController {
     return this.reproductionService.getReproductiveStatus(animalId);
   }
 
+  @Get('open-days/:animalId')
+  async getOpenDays(@Param('animalId') animalId: string) {
+    return this.reproductionService.calculateOpenDays(animalId);
+  }
+
   @Get('due-date/:animalId')
   async getDueDate(@Param('animalId') animalId: string) {
     return this.reproductionService.calculateDueDates(animalId);

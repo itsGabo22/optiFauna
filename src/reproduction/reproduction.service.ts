@@ -14,6 +14,8 @@ import {
 } from './entities/reproduction-record.entity';
 import {
   DueDateInfo,
+  OPEN_DAYS_TARGET,
+  OpenDaysReport,
   ReproductiveStatusReport,
 } from './interfaces/reproduction-reports.interface';
 import { daysBetween, todayIso, toIsoDate } from '../common/utils/date.utils';
@@ -207,6 +209,59 @@ export class ReproductionService {
 
     // Only heats/weanings on file: the animal has never been served.
     return this.withStatus(report, 'OPEN', report.lastEventDate, today);
+  }
+
+  async calculateOpenDays(animalId: string): Promise<OpenDaysReport> {
+    const records = await this.getHistory(animalId); // newest first
+    const today = todayIso();
+
+    const report: OpenDaysReport = {
+      animalId,
+      lastBirthDate: null,
+      conceptionDate: null,
+      openDays: null,
+      isClosed: false,
+      target: OPEN_DAYS_TARGET,
+      exceedsTarget: null,
+    };
+
+    const lastBirth = records.find(
+      (r) => r.eventType === ReproductionEventType.BIRTH,
+    );
+    if (!lastBirth) {
+      // Heifers have no calving yet, so open days are not defined.
+      return report;
+    }
+
+    const lastBirthDate = toIsoDate(lastBirth.eventDate);
+    const afterBirth = records.filter(
+      (r) => r.id !== lastBirth.id && toIsoDate(r.eventDate) >= lastBirthDate,
+    );
+
+    // Conception = the insemination after the last calving whose pregnancy was
+    // confirmed positive and that was not undone by a later abortion.
+    const lastAbortion = afterBirth.find(
+      (r) => r.eventType === ReproductionEventType.ABORTION,
+    );
+    const conception = afterBirth.find(
+      (r) =>
+        r.eventType === ReproductionEventType.INSEMINATION &&
+        r.pregnancyResult === PregnancyResult.CONFIRMED_POSITIVE &&
+        (!lastAbortion ||
+          toIsoDate(r.eventDate) > toIsoDate(lastAbortion.eventDate)),
+    );
+
+    const conceptionDate = conception ? toIsoDate(conception.eventDate) : null;
+    const openDays = daysBetween(lastBirthDate, conceptionDate ?? today);
+
+    return {
+      ...report,
+      lastBirthDate,
+      conceptionDate,
+      openDays,
+      isClosed: conception !== undefined,
+      exceedsTarget: openDays > OPEN_DAYS_TARGET,
+    };
   }
 
   private withStatus(
