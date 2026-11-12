@@ -61,6 +61,12 @@ Arranca en modo desarrollo:
 npm run start:dev
 ```
 
+Una vez levantado el servidor, la documentación interactiva de **Swagger (OpenAPI)** para probar todos los endpoints y consultar esquemas está disponible en:
+
+```text
+http://localhost:3000/api
+```
+
 TypeORM tiene `synchronize: true`, así que **las tablas se crean y actualizan solas** a partir de las entidades. No escribas migraciones ni SQL a mano en esta etapa.
 
 Comandos que vas a usar todo el tiempo:
@@ -253,8 +259,8 @@ Estado del código al momento de escribir esto (rama `main`):
 | Health | ✅ | 6 | ✅ | Completo: vacunas, tratamientos, desparasitaciones, historial, alertas y reporte ICA real |
 | Reproduction | ✅ | 10 | ✅ | Completo: celos, abortos, historial, estado, días abiertos, partos próximos |
 | Nutrition | ✅ | 9 | ✅ | Completo: inventario con movimientos y alertas, dietas por animal, costo de alimentación |
-| Finance | ✅ | 3 | ❌ | DTOs incompletos, sin costo por litro |
-| Farms | ✅ | 2 | ❌ | Sin consultas ni actualización |
+| Finance | ✅ | 7 | ✅ | Completo: producción de leche, gastos, venta de animales, costo por litro, resumen y ROI |
+| Farms | ✅ | 6 | ✅ | Completo: listado, detalle con conteo de animales, actualización y gestión de trabajadores |
 
 ---
 
@@ -356,6 +362,8 @@ Archivos permitidos: todo lo que está dentro de `src/reproduction/` y `src/nutr
 ### 5.3 Carlos — `FinanceModule` y `FarmsModule`
 
 Archivos permitidos: todo lo que está dentro de `src/finance/` y `src/farms/`. Nada más.
+
+> **Estado: las tareas K1 a K3 están terminadas y commiteadas.** La documentación completa de endpoints está en [`src/farms/README.md`](src/farms/README.md) y [`src/finance/README.md`](src/finance/README.md).
 
 #### Tarea K1 — Consultas y actualización de fincas (`src/farms/`)
 
