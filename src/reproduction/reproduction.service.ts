@@ -52,7 +52,9 @@ export class ReproductionService {
     return this.reproductionRepository.save(record);
   }
 
-  async logInsemination(inseminationDto: InseminationDto): Promise<ReproductionRecord> {
+  async logInsemination(
+    inseminationDto: InseminationDto,
+  ): Promise<ReproductionRecord> {
     // Gestation period for cattle is roughly 283 days (~9 months and 10 days)
     const inseminationDate = new Date(inseminationDto.date);
     const estimatedDueDate = new Date(inseminationDate);
@@ -189,7 +191,13 @@ export class ReproductionService {
             const dueDate =
               record.estimatedDueDate ??
               this.findDueDateBefore(records, eventDate);
-            return this.withStatus(report, 'PREGNANT', eventDate, today, dueDate);
+            return this.withStatus(
+              report,
+              'PREGNANT',
+              eventDate,
+              today,
+              dueDate,
+            );
           }
           return this.withStatus(report, 'OPEN', eventDate, today);
 

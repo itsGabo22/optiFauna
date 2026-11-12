@@ -13,10 +13,7 @@ import {
  * - PREGNANT: pregnancy confirmed positive.
  */
 export type ReproductiveStatus =
-  | 'NO_RECORDS'
-  | 'OPEN'
-  | 'INSEMINATED'
-  | 'PREGNANT';
+  'NO_RECORDS' | 'OPEN' | 'INSEMINATED' | 'PREGNANT';
 
 export interface ReproductiveStatusReport {
   animalId: string;
