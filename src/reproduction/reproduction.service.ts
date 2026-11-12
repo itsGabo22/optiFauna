@@ -3,6 +3,7 @@ import { InseminationDto } from './dto/insemination.dto';
 import { PregnancyCheckDto } from './dto/pregnancy-check.dto';
 import { BirthDto } from './dto/birth.dto';
 import { HeatDto } from './dto/heat.dto';
+import { AbortionDto } from './dto/abortion.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
@@ -83,6 +84,20 @@ export class ReproductionService {
       lastInseminationDate: lastInsemination?.eventDate || null,
       estimatedDueDate: lastInsemination?.estimatedDueDate || null,
     };
+  }
+
+  async logAbortion(abortionDto: AbortionDto): Promise<ReproductionRecord> {
+    const record = this.reproductionRepository.create({
+      animalId: abortionDto.animalId,
+      eventType: ReproductionEventType.ABORTION,
+      eventDate: abortionDto.date,
+      pregnancyResult: PregnancyResult.CONFIRMED_NEGATIVE,
+      details: abortionDto.cause
+        ? `Abortion recorded. Cause: ${abortionDto.cause}`
+        : 'Abortion recorded',
+    });
+
+    return this.reproductionRepository.save(record);
   }
 
   async logBirth(birthDto: BirthDto): Promise<ReproductionRecord> {
