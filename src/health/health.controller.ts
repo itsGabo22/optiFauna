@@ -4,6 +4,7 @@ import { VaccineDto } from './dto/vaccine.dto';
 import { TreatmentDto } from './dto/treatment.dto';
 import { DewormingDto } from './dto/deworming.dto';
 import { HealthHistoryQueryDto } from './dto/health-history-query.dto';
+import { UpcomingHealthQueryDto } from './dto/upcoming-health-query.dto';
 
 @Controller('health')
 export class HealthController {
@@ -30,6 +31,11 @@ export class HealthController {
     @Query() query: HealthHistoryQueryDto,
   ) {
     return this.healthService.getAnimalHistory(animalId, query);
+  }
+
+  @Get('upcoming')
+  async getUpcomingEvents(@Query() query: UpcomingHealthQueryDto) {
+    return this.healthService.getUpcomingEvents(query);
   }
 
   @Get('reports/ica')
