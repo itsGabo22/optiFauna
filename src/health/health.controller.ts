@@ -1,8 +1,9 @@
-import { Controller, Post, Get, Body, Query } from '@nestjs/common';
+import { Controller, Post, Get, Body, Query, Param } from '@nestjs/common';
 import { HealthService } from './health.service';
 import { VaccineDto } from './dto/vaccine.dto';
 import { TreatmentDto } from './dto/treatment.dto';
 import { DewormingDto } from './dto/deworming.dto';
+import { HealthHistoryQueryDto } from './dto/health-history-query.dto';
 
 @Controller('health')
 export class HealthController {
@@ -21,6 +22,14 @@ export class HealthController {
   @Post('dewormings')
   async registerDeworming(@Body() dewormingDto: DewormingDto) {
     return this.healthService.registerDeworming(dewormingDto);
+  }
+
+  @Get('animal/:animalId')
+  async getAnimalHistory(
+    @Param('animalId') animalId: string,
+    @Query() query: HealthHistoryQueryDto,
+  ) {
+    return this.healthService.getAnimalHistory(animalId, query);
   }
 
   @Get('reports/ica')

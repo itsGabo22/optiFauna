@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { VaccineDto } from './dto/vaccine.dto';
 import { TreatmentDto } from './dto/treatment.dto';
 import { DewormingDto } from './dto/deworming.dto';
+import { HealthHistoryQueryDto } from './dto/health-history-query.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
@@ -75,6 +76,16 @@ export class HealthService {
         dewormingDto.description ?? `Deworming: ${dewormingDto.medication}`,
     });
     return this.healthRecordRepository.save(record);
+  }
+
+  async getAnimalHistory(
+    animalId: string,
+    query: HealthHistoryQueryDto = {},
+  ): Promise<HealthRecord[]> {
+    return this.healthRecordRepository.find({
+      where: query.type ? { animalId, type: query.type } : { animalId },
+      order: { date: 'DESC', createdAt: 'DESC' },
+    });
   }
 
   async generateICAReport(farmId: string): Promise<any> {
