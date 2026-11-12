@@ -3,10 +3,16 @@ import { ReproductionService } from './reproduction.service';
 import { InseminationDto } from './dto/insemination.dto';
 import { PregnancyCheckDto } from './dto/pregnancy-check.dto';
 import { BirthDto } from './dto/birth.dto';
+import { HeatDto } from './dto/heat.dto';
 
 @Controller('reproduction')
 export class ReproductionController {
   constructor(private readonly reproductionService: ReproductionService) {}
+
+  @Post('heat')
+  async logHeat(@Body() heatDto: HeatDto) {
+    return this.reproductionService.logHeat(heatDto);
+  }
 
   @Post('insemination')
   async logInsemination(@Body() inseminationDto: InseminationDto) {

@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InseminationDto } from './dto/insemination.dto';
 import { PregnancyCheckDto } from './dto/pregnancy-check.dto';
 import { BirthDto } from './dto/birth.dto';
+import { HeatDto } from './dto/heat.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
@@ -16,6 +17,18 @@ export class ReproductionService {
     @InjectRepository(ReproductionRecord)
     private readonly reproductionRepository: Repository<ReproductionRecord>,
   ) {}
+
+  async logHeat(heatDto: HeatDto): Promise<ReproductionRecord> {
+    const record = this.reproductionRepository.create({
+      animalId: heatDto.animalId,
+      eventType: ReproductionEventType.HEAT_DETECTION,
+      eventDate: heatDto.date,
+      technician: heatDto.observedBy,
+      details: heatDto.notes ?? 'Heat (estrus) detected',
+    });
+
+    return this.reproductionRepository.save(record);
+  }
 
   async logInsemination(inseminationDto: InseminationDto): Promise<ReproductionRecord> {
     // Gestation period for cattle is roughly 283 days (~9 months and 10 days)
