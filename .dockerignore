@@ -1,0 +1,15 @@
+# No copiar al contexto de build: aligera la imagen y evita filtrar secretos.
+node_modules
+dist
+coverage
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+*.log
+npm-debug.log*
+.vscode
+.idea
+docs
+*.md
