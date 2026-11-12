@@ -2,6 +2,7 @@ import { Controller, Post, Get, Body, Query } from '@nestjs/common';
 import { HealthService } from './health.service';
 import { VaccineDto } from './dto/vaccine.dto';
 import { TreatmentDto } from './dto/treatment.dto';
+import { DewormingDto } from './dto/deworming.dto';
 
 @Controller('health')
 export class HealthController {
@@ -15,6 +16,11 @@ export class HealthController {
   @Post('treatments')
   async registerTreatment(@Body() treatmentDto: TreatmentDto) {
     return this.healthService.registerTreatment(treatmentDto);
+  }
+
+  @Post('dewormings')
+  async registerDeworming(@Body() dewormingDto: DewormingDto) {
+    return this.healthService.registerDeworming(dewormingDto);
   }
 
   @Get('reports/ica')
