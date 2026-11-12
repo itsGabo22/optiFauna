@@ -34,6 +34,11 @@ export class NutritionController {
     return this.nutritionService.consumeFeedItem(id, dto);
   }
 
+  @Get('inventory/alerts')
+  async getLowStockAlerts(@Query('farmId') farmId?: string) {
+    return this.nutritionService.getLowStockAlerts(farmId);
+  }
+
   @Get('inventory')
   async getInventory(@Query('farmId') farmId?: string) {
     return this.nutritionService.getInventory(farmId);
