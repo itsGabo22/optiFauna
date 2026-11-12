@@ -72,7 +72,6 @@ export class NutritionService {
       return this.nutritionRepository.find({ where: base, order });
     }
 
-    // Active = already started and either open-ended or not yet ended.
     const today = todayIso();
     return this.nutritionRepository.find({
       where: [
@@ -87,12 +86,6 @@ export class NutritionService {
     });
   }
 
-  /**
-   * Feed cost of one animal over a period (default: last 30 days, both ends
-   * inclusive). Diets without costPerKg are listed but add 0 to the totals.
-   * Never throws for an animal without diets: it returns zeros, as agreed
-   * with FinanceModule (see root README, "Contratos entre módulos").
-   */
   async getFeedCostForAnimal(
     animalId: string,
     from?: string,
@@ -232,7 +225,6 @@ export class NutritionService {
     return this.feedInventoryRepository.save(item);
   }
 
-  /** Items whose stock is at or below their alert threshold. */
   async getLowStockAlerts(farmId?: string): Promise<FeedInventory[]> {
     const query = this.feedInventoryRepository
       .createQueryBuilder('item')

@@ -66,7 +66,7 @@ export class ReproductionRecord {
   inseminationType?: InseminationType;
 
   @Column({ nullable: true })
-  sireIdOrSemen?: string; // Bull ID or Semen Straw code
+  sireIdOrSemen?: string;
 
   @Column({
     type: 'enum',

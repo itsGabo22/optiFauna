@@ -55,7 +55,6 @@ export class ReproductionService {
   async logInsemination(
     inseminationDto: InseminationDto,
   ): Promise<ReproductionRecord> {
-    // Gestation period for cattle is roughly 283 days (~9 months and 10 days)
     const inseminationDate = new Date(inseminationDto.date);
     const estimatedDueDate = new Date(inseminationDate);
     estimatedDueDate.setDate(estimatedDueDate.getDate() + 283);
@@ -82,9 +81,6 @@ export class ReproductionService {
       ? PregnancyResult.CONFIRMED_POSITIVE
       : PregnancyResult.CONFIRMED_NEGATIVE;
 
-    // The check resolves the most recent insemination that is still pending,
-    // so the insemination record carries the final result and its due date
-    // can be used for upcoming-birth alerts.
     const pendingInsemination = await this.reproductionRepository.findOne({
       where: {
         animalId: pregnancyCheckDto.animalId,
@@ -177,7 +173,6 @@ export class ReproductionService {
     report.lastEventType = records[0].eventType;
     report.lastEventDate = toIsoDate(records[0].eventDate);
 
-    // Records are ordered newest first; the first state-changing event wins.
     for (const record of records) {
       const eventDate = toIsoDate(record.eventDate);
 
@@ -223,17 +218,15 @@ export class ReproductionService {
           );
 
         default:
-          // HEAT_DETECTION and WEANING do not change the reproductive state.
           continue;
       }
     }
 
-    // Only heats/weanings on file: the animal has never been served.
     return this.withStatus(report, 'OPEN', report.lastEventDate, today);
   }
 
   async calculateOpenDays(animalId: string): Promise<OpenDaysReport> {
-    const records = await this.getHistory(animalId); // newest first
+    const records = await this.getHistory(animalId);
     const today = todayIso();
 
     const report: OpenDaysReport = {
@@ -250,7 +243,6 @@ export class ReproductionService {
       (r) => r.eventType === ReproductionEventType.BIRTH,
     );
     if (!lastBirth) {
-      // Heifers have no calving yet, so open days are not defined.
       return report;
     }
 
@@ -259,8 +251,6 @@ export class ReproductionService {
       (r) => r.id !== lastBirth.id && toIsoDate(r.eventDate) >= lastBirthDate,
     );
 
-    // Conception = the insemination after the last calving whose pregnancy was
-    // confirmed positive and that was not undone by a later abortion.
     const lastAbortion = afterBirth.find(
       (r) => r.eventType === ReproductionEventType.ABORTION,
     );
@@ -304,8 +294,6 @@ export class ReproductionService {
 
     const upcoming: UpcomingBirth[] = [];
     for (const record of candidates) {
-      // Skip pregnancies that already ended (calving or abortion registered
-      // on or after the insemination date).
       const alreadyEnded = await this.reproductionRepository.count({
         where: {
           animalId: record.animalId,
@@ -354,7 +342,6 @@ export class ReproductionService {
     };
   }
 
-  /** Due date of the latest insemination on or before `date` (records newest first). */
   private findDueDateBefore(
     records: ReproductionRecord[],
     date: string,

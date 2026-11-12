@@ -18,11 +18,11 @@ export class VaccineDto {
 
   @IsString()
   @IsOptional()
-  animalId?: string; // If individual
+  animalId?: string;
 
   @IsString()
   @IsOptional()
-  batchId?: string; // If batch-based
+  batchId?: string;
 
   @IsString()
   @IsOptional()

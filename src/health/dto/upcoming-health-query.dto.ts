@@ -6,7 +6,6 @@ export class UpcomingHealthQueryDto {
   @IsOptional()
   farmId?: string;
 
-  /** Window in days counted from today. Defaults to 30. */
   @Type(() => Number)
   @IsInt()
   @Min(1)

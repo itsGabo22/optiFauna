@@ -19,7 +19,7 @@ import { FarmsModule } from './farms/farms.module';
       password: process.env.DB_PASSWORD || 'postgres',
       database: process.env.DB_NAME || 'optifauna',
       autoLoadEntities: true,
-      synchronize: true, // Only for development/structural stage
+      synchronize: true,
     }),
     AnimalsModule,
     HealthModule,

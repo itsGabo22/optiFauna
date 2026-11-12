@@ -25,7 +25,6 @@ export class NutritionRecord {
   @JoinColumn({ name: 'farmId' })
   farm?: Farm;
 
-  /** A diet targets either one animal (animalId) or a group/lot (animalGroupId). */
   @Column({ nullable: true })
   animalId?: string;
 

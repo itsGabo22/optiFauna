@@ -31,7 +31,6 @@ export class CreateFeedInventoryDto {
   @IsOptional()
   minStockAlertKg?: number;
 
-  /** Cost per kg in COP. */
   @IsNumber()
   @Min(0)
   @IsOptional()

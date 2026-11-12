@@ -14,7 +14,6 @@ export class DietsQueryDto {
   @IsOptional()
   animalGroupId?: string;
 
-  /** `true` returns only diets in force today (started, not yet ended). */
   @Transform(({ value }) => value === true || value === 'true')
   @IsBoolean()
   @IsOptional()
