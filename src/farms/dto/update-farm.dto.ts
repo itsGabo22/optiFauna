@@ -14,4 +14,3 @@ export class UpdateFarmDto {
   @IsOptional()
   sizeHectares?: number;
 }
-
