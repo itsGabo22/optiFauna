@@ -3,12 +3,20 @@ import { VaccineDto } from './dto/vaccine.dto';
 import { TreatmentDto } from './dto/treatment.dto';
 import { DewormingDto } from './dto/deworming.dto';
 import { HealthHistoryQueryDto } from './dto/health-history-query.dto';
+import { UpcomingHealthQueryDto } from './dto/upcoming-health-query.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, LessThanOrEqual, Repository } from 'typeorm';
 import {
   HealthRecord,
   HealthRecordType,
 } from './entities/health-record.entity';
+import { UpcomingHealthEvent } from './interfaces/health-reports.interface';
+import {
+  addDays,
+  daysBetween,
+  todayIso,
+  toIsoDate,
+} from '../common/utils/date.utils';
 
 @Injectable()
 export class HealthService {
@@ -85,6 +93,42 @@ export class HealthService {
     return this.healthRecordRepository.find({
       where: query.type ? { animalId, type: query.type } : { animalId },
       order: { date: 'DESC', createdAt: 'DESC' },
+    });
+  }
+
+  async getUpcomingEvents(
+    query: UpcomingHealthQueryDto = {},
+  ): Promise<UpcomingHealthEvent[]> {
+    const today = todayIso();
+    const until = addDays(today, query.days ?? 30);
+
+    const records = await this.healthRecordRepository.find({
+      where: query.farmId
+        ? [
+            { farmId: query.farmId, nextDueDate: LessThanOrEqual(until) },
+            {
+              farmId: IsNull(),
+              animal: { farmId: query.farmId },
+              nextDueDate: LessThanOrEqual(until),
+            },
+          ]
+        : { nextDueDate: LessThanOrEqual(until) },
+      relations: { animal: true },
+      order: { nextDueDate: 'ASC' },
+    });
+
+    return records.map((record) => {
+      const nextDueDate = toIsoDate(record.nextDueDate as string);
+      const daysRemaining = daysBetween(today, nextDueDate);
+      return {
+        recordId: record.id,
+        animalId: record.animalId ?? null,
+        type: record.type,
+        title: record.title ?? null,
+        nextDueDate,
+        daysRemaining,
+        overdue: daysRemaining < 0,
+      };
     });
   }
 
