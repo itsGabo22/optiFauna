@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { YieldDto } from './dto/yield.dto';
 import { ExpenseDto } from './dto/expense.dto';
+import { AnimalSaleDto } from './dto/animal-sale.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
@@ -58,6 +59,24 @@ export class FinanceService {
       date: expenseDto.date,
       description: expenseDto.description ?? 'Operational expense recorded',
       receiptNumber: expenseDto.receiptNumber,
+    });
+    return this.financeRepository.save(record);
+  }
+
+  async registerAnimalSale(
+    animalSaleDto: AnimalSaleDto,
+  ): Promise<FinanceRecord> {
+    const record = this.financeRepository.create({
+      farmId: animalSaleDto.farmId,
+      animalId: animalSaleDto.animalId,
+      recordType: FinanceRecordType.YIELD,
+      category: FinanceCategory.ANIMAL_SALE,
+      amount: animalSaleDto.amount,
+      date: animalSaleDto.date,
+      description: animalSaleDto.buyer
+        ? `Animal sale - Buyer: ${animalSaleDto.buyer}`
+        : 'Animal sale recorded',
+      receiptNumber: animalSaleDto.receiptNumber,
     });
     return this.financeRepository.save(record);
   }
