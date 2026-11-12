@@ -5,12 +5,19 @@ import { DewormingDto } from './dto/deworming.dto';
 import { HealthHistoryQueryDto } from './dto/health-history-query.dto';
 import { UpcomingHealthQueryDto } from './dto/upcoming-health-query.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, LessThanOrEqual, Repository } from 'typeorm';
+import { Between, IsNull, LessThanOrEqual, Repository } from 'typeorm';
 import {
   HealthRecord,
   HealthRecordType,
 } from './entities/health-record.entity';
-import { UpcomingHealthEvent } from './interfaces/health-reports.interface';
+import {
+  IcaReport,
+  TreatmentSummaryItem,
+  UpcomingHealthEvent,
+  VaccineSummaryItem,
+} from './interfaces/health-reports.interface';
+import { AnimalsService } from '../animals/animals.service';
+import { AnimalStatus } from '../animals/entities/animal.entity';
 import {
   addDays,
   daysBetween,
@@ -23,6 +30,7 @@ export class HealthService {
   constructor(
     @InjectRepository(HealthRecord)
     private readonly healthRecordRepository: Repository<HealthRecord>,
+    private readonly animalsService: AnimalsService,
   ) {}
 
   async registerVaccine(vaccineDto: VaccineDto): Promise<HealthRecord> {
@@ -132,17 +140,117 @@ export class HealthService {
     });
   }
 
-  async generateICAReport(farmId: string): Promise<any> {
+  async generateICAReport(
+    farmId?: string,
+    from?: string,
+    to?: string,
+  ): Promise<IcaReport> {
+    if (!farmId || !farmId.trim()) {
+      throw new BadRequestException('farmId query parameter is required');
+    }
+
+    const today = todayIso();
+    const periodTo = to ? toIsoDate(to) : today;
+    const periodFrom = from ? toIsoDate(from) : addDays(periodTo, -365);
+
+    if (periodFrom > periodTo) {
+      throw new BadRequestException('from must be on or before to');
+    }
+
     const records = await this.healthRecordRepository.find({
-      where: farmId ? { farmId } : {},
-      order: { date: 'DESC' },
+      where: [
+        { farmId, date: Between(periodFrom, periodTo) },
+        {
+          farmId: IsNull(),
+          animal: { farmId },
+          date: Between(periodFrom, periodTo),
+        },
+      ],
+      relations: { animal: true },
+      order: { date: 'DESC', createdAt: 'DESC' },
     });
+
+    const totalAnimals = await this.animalsService.countByFarm(
+      farmId,
+      AnimalStatus.ACTIVE,
+    );
+
+    const vaccineRecords = records.filter(
+      (r) => r.type === HealthRecordType.VACCINE,
+    );
+    const vaccineMap = new Map<
+      string,
+      { count: number; animalIds: Set<string> }
+    >();
+    const allVaccinatedAnimals = new Set<string>();
+
+    for (const record of vaccineRecords) {
+      const vaccineName = record.title ?? record.medication ?? 'Unknown';
+      const entry = vaccineMap.get(vaccineName) ?? {
+        count: 0,
+        animalIds: new Set<string>(),
+      };
+      entry.count += 1;
+      if (record.animalId) {
+        entry.animalIds.add(record.animalId);
+        allVaccinatedAnimals.add(record.animalId);
+      }
+      vaccineMap.set(vaccineName, entry);
+    }
+
+    const byVaccine: VaccineSummaryItem[] = Array.from(
+      vaccineMap.entries(),
+    ).map(([vaccineName, data]) => ({
+      vaccineName,
+      count: data.count,
+      animalsCovered: data.animalIds.size,
+    }));
+
+    const coveragePercentage =
+      totalAnimals > 0
+        ? Math.round((allVaccinatedAnimals.size / totalAnimals) * 10000) / 100
+        : 0;
+
+    const treatmentRecords = records.filter(
+      (r) => r.type === HealthRecordType.TREATMENT,
+    );
+    const medicationMap = new Map<string, number>();
+    for (const record of treatmentRecords) {
+      const medication = record.medication ?? record.title ?? 'Unknown';
+      medicationMap.set(medication, (medicationMap.get(medication) ?? 0) + 1);
+    }
+
+    const byMedication: TreatmentSummaryItem[] = Array.from(
+      medicationMap.entries(),
+    ).map(([medication, count]) => ({
+      medication,
+      count,
+    }));
+
+    const dewormingRecords = records.filter(
+      (r) => r.type === HealthRecordType.DEWORMING,
+    );
+
+    const pendingEvents = await this.getUpcomingEvents({ farmId, days: 30 });
 
     return {
       farmId,
-      status: 'GENERATED',
-      totalSanitaryEvents: records.length,
-      reportUrl: `http://localhost:3000/reports/ica-${farmId || 'all'}-${Date.now()}.pdf`,
+      period: { from: periodFrom, to: periodTo },
+      generatedAt: new Date().toISOString(),
+      totalAnimals,
+      vaccinations: {
+        total: vaccineRecords.length,
+        byVaccine,
+        coveragePercentage,
+      },
+      treatments: {
+        total: treatmentRecords.length,
+        byMedication,
+      },
+      dewormings: {
+        total: dewormingRecords.length,
+      },
+      pendingEvents,
       records,
     };
   }
