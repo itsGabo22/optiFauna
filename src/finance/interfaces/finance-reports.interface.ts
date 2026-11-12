@@ -46,3 +46,4 @@ export interface AnimalProfitabilityReport {
   roiPercentage: string;
   recordsCount: number;
 }
+

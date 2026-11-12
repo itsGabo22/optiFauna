@@ -3,18 +3,25 @@ import { YieldDto } from './dto/yield.dto';
 import { ExpenseDto } from './dto/expense.dto';
 import { AnimalSaleDto } from './dto/animal-sale.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Between, Repository } from 'typeorm';
 import {
   FinanceRecord,
   FinanceRecordType,
   FinanceCategory,
 } from './entities/finance-record.entity';
+import { NutritionService } from '../nutrition/nutrition.service';
+import { addDays, todayIso, toIsoDate } from '../common/utils/date.utils';
+import {
+  CostPerLiterReport,
+  DatePeriod,
+} from './interfaces/finance-reports.interface';
 
 @Injectable()
 export class FinanceService {
   constructor(
     @InjectRepository(FinanceRecord)
     private readonly financeRepository: Repository<FinanceRecord>,
+    private readonly nutritionService: NutritionService,
   ) {}
 
   async registerMilkProduction(yieldDto: YieldDto): Promise<FinanceRecord> {
@@ -83,6 +90,83 @@ export class FinanceService {
 
   private round2(value: number): number {
     return Math.round(value * 100) / 100;
+  }
+
+  private resolvePeriod(from?: string, to?: string): DatePeriod {
+    const periodTo = to ? toIsoDate(to) : todayIso();
+    const periodFrom = from ? toIsoDate(from) : addDays(periodTo, -29);
+    if (periodFrom > periodTo) {
+      throw new BadRequestException('from must be on or before to');
+    }
+    return { from: periodFrom, to: periodTo };
+  }
+
+  async calculateCostPerLiter(
+    animalId: string,
+    from?: string,
+    to?: string,
+  ): Promise<CostPerLiterReport> {
+    const period = this.resolvePeriod(from, to);
+
+    const [records, feedReport] = await Promise.all([
+      this.financeRepository.find({
+        where: {
+          animalId,
+          date: Between(period.from, period.to),
+        },
+        order: { date: 'DESC', createdAt: 'DESC' },
+      }),
+      this.nutritionService.getFeedCostForAnimal(
+        animalId,
+        period.from,
+        period.to,
+      ),
+    ]);
+
+    let litersProduced = 0;
+    let milkIncome = 0;
+    let directExpenses = 0;
+
+    for (const record of records) {
+      const amount = Number(record.amount) || 0;
+      if (
+        record.recordType === FinanceRecordType.YIELD &&
+        record.category === FinanceCategory.MILK_SALE
+      ) {
+        litersProduced += Number(record.quantity) || 0;
+        milkIncome += amount;
+      } else if (record.recordType === FinanceRecordType.EXPENSE) {
+        directExpenses += amount;
+      }
+    }
+
+    litersProduced = this.round2(litersProduced);
+    milkIncome = this.round2(milkIncome);
+    directExpenses = this.round2(directExpenses);
+
+    const feedCost = this.round2(feedReport.periodFeedCost);
+    const totalCost = this.round2(directExpenses + feedCost);
+    const costPerLiter =
+      litersProduced > 0 ? this.round2(totalCost / litersProduced) : null;
+    const averagePricePerLiter =
+      litersProduced > 0 ? this.round2(milkIncome / litersProduced) : null;
+    const marginPerLiter =
+      averagePricePerLiter !== null && costPerLiter !== null
+        ? this.round2(averagePricePerLiter - costPerLiter)
+        : null;
+
+    return {
+      animalId,
+      period,
+      litersProduced,
+      milkIncome,
+      directExpenses,
+      feedCost,
+      totalCost,
+      costPerLiter,
+      averagePricePerLiter,
+      marginPerLiter,
+    };
   }
 
   async calculateAnimalProfitability(animalId: string): Promise<any> {

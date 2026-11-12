@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, Param } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, Query } from '@nestjs/common';
 import { FinanceService } from './finance.service';
 import { YieldDto } from './dto/yield.dto';
 import { ExpenseDto } from './dto/expense.dto';
@@ -26,6 +26,15 @@ export class FinanceController {
   @Post('animal-sales')
   async registerAnimalSale(@Body() animalSaleDto: AnimalSaleDto) {
     return this.financeService.registerAnimalSale(animalSaleDto);
+  }
+
+  @Get('cost-per-liter/:animalId')
+  async getCostPerLiter(
+    @Param('animalId') animalId: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    return this.financeService.calculateCostPerLiter(animalId, from, to);
   }
 
   @Get('roi/:animalId')
