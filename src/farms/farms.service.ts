@@ -5,6 +5,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Farm } from './entities/farm.entity';
 import { FarmWorker, WorkerRole } from './entities/farm-worker.entity';
+import { Animal } from '../animals/entities/animal.entity';
+import { FarmDetails } from './interfaces/farm-details.interface';
 
 @Injectable()
 export class FarmsService {
@@ -13,6 +15,8 @@ export class FarmsService {
     private readonly farmRepository: Repository<Farm>,
     @InjectRepository(FarmWorker)
     private readonly farmWorkerRepository: Repository<FarmWorker>,
+    @InjectRepository(Animal)
+    private readonly animalRepository: Repository<Animal>,
   ) {}
 
   async createFarm(createFarmDto: CreateFarmDto): Promise<Farm> {
@@ -30,6 +34,32 @@ export class FarmsService {
     }
 
     return savedFarm;
+  }
+
+  async findAll(ownerId?: string): Promise<Farm[]> {
+    return this.farmRepository.find({
+      where: ownerId ? { ownerId } : {},
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async findOne(id: string): Promise<FarmDetails> {
+    const farm = await this.farmRepository.findOne({
+      where: { id },
+      relations: { workers: true },
+    });
+    if (!farm) {
+      throw new NotFoundException(`Farm with id ${id} not found`);
+    }
+
+    const animalsCount = await this.animalRepository.count({
+      where: { farmId: id },
+    });
+
+    return {
+      ...farm,
+      animalsCount,
+    };
   }
 
   async assignWorker(

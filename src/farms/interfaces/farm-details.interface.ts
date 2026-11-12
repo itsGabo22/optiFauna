@@ -10,4 +10,3 @@ export interface RemovedWorkerResult {
   farmId: string;
   userId: string;
 }
-

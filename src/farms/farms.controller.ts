@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Param } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, Query } from '@nestjs/common';
 import { FarmsService } from './farms.service';
 import { CreateFarmDto } from './dto/create-farm.dto';
 import { AssignWorkerDto } from './dto/assign-worker.dto';
@@ -10,6 +10,16 @@ export class FarmsController {
   @Post()
   async createFarm(@Body() createFarmDto: CreateFarmDto) {
     return this.farmsService.createFarm(createFarmDto);
+  }
+
+  @Get()
+  async findAll(@Query('ownerId') ownerId?: string) {
+    return this.farmsService.findAll(ownerId);
+  }
+
+  @Get(':id')
+  async findOne(@Param('id') id: string) {
+    return this.farmsService.findOne(id);
   }
 
   @Post(':id/workers')
