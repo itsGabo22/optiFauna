@@ -1,0 +1,4 @@
+# Normaliza finales de linea: el repositorio guarda LF, cada sistema
+# trabaja con su convencion local. Evita diffs de archivos completos
+# entre Windows y Linux/macOS.
+* text=auto
