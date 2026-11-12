@@ -4,6 +4,7 @@ import { PregnancyCheckDto } from './dto/pregnancy-check.dto';
 import { BirthDto } from './dto/birth.dto';
 import { HeatDto } from './dto/heat.dto';
 import { AbortionDto } from './dto/abortion.dto';
+import { HistoryQueryDto } from './dto/history-query.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
@@ -68,6 +69,18 @@ export class ReproductionService {
     });
 
     return this.reproductionRepository.save(record);
+  }
+
+  async getHistory(
+    animalId: string,
+    query: HistoryQueryDto = {},
+  ): Promise<ReproductionRecord[]> {
+    return this.reproductionRepository.find({
+      where: query.eventType
+        ? { animalId, eventType: query.eventType }
+        : { animalId },
+      order: { eventDate: 'DESC', createdAt: 'DESC' },
+    });
   }
 
   async calculateDueDates(animalId: string): Promise<any> {
