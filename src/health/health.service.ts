@@ -3,7 +3,10 @@ import { VaccineDto } from './dto/vaccine.dto';
 import { TreatmentDto } from './dto/treatment.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { HealthRecord, HealthRecordType } from './entities/health-record.entity';
+import {
+  HealthRecord,
+  HealthRecordType,
+} from './entities/health-record.entity';
 
 @Injectable()
 export class HealthService {
