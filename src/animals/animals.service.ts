@@ -92,4 +92,20 @@ export class AnimalsService {
       order: { birthDate: 'DESC', createdAt: 'DESC' },
     });
   }
+
+  async findByFarm(farmId: string): Promise<Animal[]> {
+    return this.animalRepository.find({
+      where: { farmId },
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async countByFarm(
+    farmId: string,
+    status: AnimalStatus = AnimalStatus.ACTIVE,
+  ): Promise<number> {
+    return this.animalRepository.count({
+      where: { farmId, status },
+    });
+  }
 }
