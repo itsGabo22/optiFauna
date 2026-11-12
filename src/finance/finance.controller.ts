@@ -47,7 +47,11 @@ export class FinanceController {
   }
 
   @Get('roi/:animalId')
-  async getRoi(@Param('animalId') animalId: string) {
-    return this.financeService.calculateAnimalProfitability(animalId);
+  async getRoi(
+    @Param('animalId') animalId: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    return this.financeService.calculateAnimalProfitability(animalId, from, to);
   }
 }

@@ -12,6 +12,7 @@ import {
 import { NutritionService } from '../nutrition/nutrition.service';
 import { addDays, todayIso, toIsoDate } from '../common/utils/date.utils';
 import {
+  AnimalProfitabilityReport,
   CategoryTotal,
   CostPerLiterReport,
   DatePeriod,
@@ -103,13 +104,10 @@ export class FinanceService {
     return { from: periodFrom, to: periodTo };
   }
 
-  async calculateCostPerLiter(
+  private async fetchAnimalPeriodData(
     animalId: string,
-    from?: string,
-    to?: string,
-  ): Promise<CostPerLiterReport> {
-    const period = this.resolvePeriod(from, to);
-
+    period: DatePeriod,
+  ): Promise<[FinanceRecord[], number]> {
     const [records, feedReport] = await Promise.all([
       this.financeRepository.find({
         where: {
@@ -124,6 +122,20 @@ export class FinanceService {
         period.to,
       ),
     ]);
+
+    return [records, this.round2(feedReport.periodFeedCost)];
+  }
+
+  async calculateCostPerLiter(
+    animalId: string,
+    from?: string,
+    to?: string,
+  ): Promise<CostPerLiterReport> {
+    const period = this.resolvePeriod(from, to);
+    const [records, feedCost] = await this.fetchAnimalPeriodData(
+      animalId,
+      period,
+    );
 
     let litersProduced = 0;
     let milkIncome = 0;
@@ -146,7 +158,6 @@ export class FinanceService {
     milkIncome = this.round2(milkIncome);
     directExpenses = this.round2(directExpenses);
 
-    const feedCost = this.round2(feedReport.periodFeedCost);
     const totalCost = this.round2(directExpenses + feedCost);
     const costPerLiter =
       litersProduced > 0 ? this.round2(totalCost / litersProduced) : null;
@@ -242,32 +253,47 @@ export class FinanceService {
     map.set(category, existing);
   }
 
-  async calculateAnimalProfitability(animalId: string): Promise<any> {
-    const records = await this.financeRepository.find({
-      where: { animalId },
-    });
+  async calculateAnimalProfitability(
+    animalId: string,
+    from?: string,
+    to?: string,
+  ): Promise<AnimalProfitabilityReport> {
+    const period = this.resolvePeriod(from, to);
+    const [records, feedCost] = await this.fetchAnimalPeriodData(
+      animalId,
+      period,
+    );
 
     let totalYield = 0;
-    let totalExpense = 0;
+    let directExpenses = 0;
 
     for (const record of records) {
       const amount = Number(record.amount) || 0;
       if (record.recordType === FinanceRecordType.YIELD) {
         totalYield += amount;
       } else if (record.recordType === FinanceRecordType.EXPENSE) {
-        totalExpense += amount;
+        directExpenses += amount;
       }
     }
 
-    const netProfit = totalYield - totalExpense;
+    totalYield = this.round2(totalYield);
+    directExpenses = this.round2(directExpenses);
+
+    const totalExpense = this.round2(directExpenses + feedCost);
+    const netProfit = this.round2(totalYield - totalExpense);
     const roiPercentage =
       totalExpense > 0
         ? ((netProfit / totalExpense) * 100).toFixed(2)
-        : '100.00';
+        : totalYield > 0
+          ? '100.00'
+          : '0.00';
 
     return {
       animalId,
+      period,
       totalYield,
+      directExpenses,
+      feedCost,
       totalExpense,
       netProfit,
       roiPercentage: `${roiPercentage}%`,
