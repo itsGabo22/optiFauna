@@ -12,6 +12,11 @@ import {
   ReproductionEventType,
   PregnancyResult,
 } from './entities/reproduction-record.entity';
+import {
+  DueDateInfo,
+  ReproductiveStatusReport,
+} from './interfaces/reproduction-reports.interface';
+import { daysBetween, todayIso, toIsoDate } from '../common/utils/date.utils';
 
 @Injectable()
 export class ReproductionService {
@@ -106,7 +111,7 @@ export class ReproductionService {
     });
   }
 
-  async calculateDueDates(animalId: string): Promise<any> {
+  async calculateDueDates(animalId: string): Promise<DueDateInfo> {
     const lastInsemination = await this.reproductionRepository.findOne({
       where: {
         animalId,
@@ -115,11 +120,125 @@ export class ReproductionService {
       order: { eventDate: 'DESC' },
     });
 
+    const estimatedDueDate = lastInsemination?.estimatedDueDate
+      ? toIsoDate(lastInsemination.estimatedDueDate)
+      : null;
+
     return {
       animalId,
-      lastInseminationDate: lastInsemination?.eventDate || null,
-      estimatedDueDate: lastInsemination?.estimatedDueDate || null,
+      lastInseminationDate: lastInsemination
+        ? toIsoDate(lastInsemination.eventDate)
+        : null,
+      pregnancyResult: lastInsemination?.pregnancyResult ?? null,
+      estimatedDueDate,
+      daysToDueDate: estimatedDueDate
+        ? daysBetween(todayIso(), estimatedDueDate)
+        : null,
     };
+  }
+
+  async getReproductiveStatus(
+    animalId: string,
+  ): Promise<ReproductiveStatusReport> {
+    const records = await this.getHistory(animalId);
+    const today = todayIso();
+
+    const report: ReproductiveStatusReport = {
+      animalId,
+      status: 'NO_RECORDS',
+      lastEventType: null,
+      lastEventDate: null,
+      daysInStatus: null,
+      estimatedDueDate: null,
+      daysToDueDate: null,
+    };
+
+    if (records.length === 0) {
+      return report;
+    }
+
+    report.lastEventType = records[0].eventType;
+    report.lastEventDate = toIsoDate(records[0].eventDate);
+
+    // Records are ordered newest first; the first state-changing event wins.
+    for (const record of records) {
+      const eventDate = toIsoDate(record.eventDate);
+
+      switch (record.eventType) {
+        case ReproductionEventType.BIRTH:
+        case ReproductionEventType.ABORTION:
+          return this.withStatus(report, 'OPEN', eventDate, today);
+
+        case ReproductionEventType.PREGNANCY_CHECK:
+          if (record.pregnancyResult === PregnancyResult.CONFIRMED_POSITIVE) {
+            const dueDate =
+              record.estimatedDueDate ??
+              this.findDueDateBefore(records, eventDate);
+            return this.withStatus(report, 'PREGNANT', eventDate, today, dueDate);
+          }
+          return this.withStatus(report, 'OPEN', eventDate, today);
+
+        case ReproductionEventType.INSEMINATION:
+          if (record.pregnancyResult === PregnancyResult.CONFIRMED_NEGATIVE) {
+            return this.withStatus(report, 'OPEN', eventDate, today);
+          }
+          if (record.pregnancyResult === PregnancyResult.CONFIRMED_POSITIVE) {
+            return this.withStatus(
+              report,
+              'PREGNANT',
+              eventDate,
+              today,
+              record.estimatedDueDate,
+            );
+          }
+          return this.withStatus(
+            report,
+            'INSEMINATED',
+            eventDate,
+            today,
+            record.estimatedDueDate,
+          );
+
+        default:
+          // HEAT_DETECTION and WEANING do not change the reproductive state.
+          continue;
+      }
+    }
+
+    // Only heats/weanings on file: the animal has never been served.
+    return this.withStatus(report, 'OPEN', report.lastEventDate, today);
+  }
+
+  private withStatus(
+    report: ReproductiveStatusReport,
+    status: ReproductiveStatusReport['status'],
+    sinceDate: string | null,
+    today: string,
+    dueDate?: string | null,
+  ): ReproductiveStatusReport {
+    const estimatedDueDate = dueDate ? toIsoDate(dueDate) : null;
+    return {
+      ...report,
+      status,
+      daysInStatus: sinceDate ? daysBetween(sinceDate, today) : null,
+      estimatedDueDate,
+      daysToDueDate: estimatedDueDate
+        ? daysBetween(today, estimatedDueDate)
+        : null,
+    };
+  }
+
+  /** Due date of the latest insemination on or before `date` (records newest first). */
+  private findDueDateBefore(
+    records: ReproductionRecord[],
+    date: string,
+  ): string | null {
+    const insemination = records.find(
+      (r) =>
+        r.eventType === ReproductionEventType.INSEMINATION &&
+        toIsoDate(r.eventDate) <= date,
+    );
+    return insemination?.estimatedDueDate ?? null;
   }
 
   async logAbortion(abortionDto: AbortionDto): Promise<ReproductionRecord> {

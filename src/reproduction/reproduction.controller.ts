@@ -44,6 +44,11 @@ export class ReproductionController {
     return this.reproductionService.getHistory(animalId, query);
   }
 
+  @Get('status/:animalId')
+  async getStatus(@Param('animalId') animalId: string) {
+    return this.reproductionService.getReproductiveStatus(animalId);
+  }
+
   @Get('due-date/:animalId')
   async getDueDate(@Param('animalId') animalId: string) {
     return this.reproductionService.calculateDueDates(animalId);
