@@ -1,4 +1,11 @@
-import { IsString, IsNotEmpty, IsDateString, IsOptional } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsDateString,
+  IsOptional,
+  IsNumber,
+  Min,
+} from 'class-validator';
 
 export class VaccineDto {
   @IsString()
@@ -16,4 +23,29 @@ export class VaccineDto {
   @IsString()
   @IsOptional()
   batchId?: string; // If batch-based
+
+  @IsString()
+  @IsOptional()
+  farmId?: string;
+
+  @IsDateString()
+  @IsOptional()
+  nextDueDate?: string;
+
+  @IsString()
+  @IsOptional()
+  veterinarian?: string;
+
+  @IsString()
+  @IsOptional()
+  dosage?: string;
+
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  cost?: number;
+
+  @IsString()
+  @IsOptional()
+  description?: string;
 }
