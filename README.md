@@ -251,8 +251,8 @@ Estado del código al momento de escribir esto (rama `main`):
 | :--- | :---: | :---: | :---: | :--- |
 | Animals | ✅ | 4 | ✅ | Base lista, faltan filtros y bajas |
 | Health | ✅ | 3 | ❌ | DTOs incompletos, reporte ICA es un placeholder |
-| Reproduction | ✅ | 4 | ❌ | Faltan celos, días abiertos y alertas |
-| Nutrition | ✅ | 3 | ❌ | `InventoryDto` vacío, sin costo por animal |
+| Reproduction | ✅ | 10 | ✅ | Completo: celos, abortos, historial, estado, días abiertos, partos próximos |
+| Nutrition | ✅ | 9 | ✅ | Completo: inventario con movimientos y alertas, dietas por animal, costo de alimentación |
 | Finance | ✅ | 3 | ❌ | DTOs incompletos, sin costo por litro |
 | Farms | ✅ | 2 | ❌ | Sin consultas ni actualización |
 
@@ -293,7 +293,7 @@ Commits mínimos: 4.
 
 1. `GET /health/animal/:animalId`: historial completo del animal ordenado por `date DESC`. Acepta `?type=VACCINE|TREATMENT|DEWORMING|CHECKUP` opcional.
 2. `GET /health/upcoming?farmId=&days=30`: registros cuyo `nextDueDate` esté entre hoy y hoy + `days` (por defecto 30), ordenados por `nextDueDate ASC`. Devuelve también los que ya estén **vencidos** (`nextDueDate < hoy`) marcados con `overdue: true`. Define la interface `UpcomingHealthEvent` con: `recordId`, `animalId`, `type`, `title`, `nextDueDate`, `daysRemaining` (negativo si vencido), `overdue`.
-   - Para filtrar por finca usa `farmId` del `HealthRecord`. Si es `null`, usa la relación `animal.farmId` (`relations: ['animal']`).
+   - Para filtrar por finca usa `farmId` del `HealthRecord`. Si es `null`, usa la relación `animal.farmId` (`relations: { animal: true }`).
 
 Commits mínimos: 2 + `docs`.
 
@@ -318,7 +318,9 @@ Commits mínimos: 3 (`feat(animals)` métodos de consulta, `feat(health)` report
 
 ### 5.2 Cristian — `ReproductionModule` y `NutritionModule`
 
-Archivos permitidos: todo lo que está dentro de `src/reproduction/` y `src/nutrition/`. Además, como coordinador del repositorio, los archivos de configuración raíz (`package.json`, `.gitignore`, `README.md`, `app.module.ts`) cuando haga falta.
+Archivos permitidos: todo lo que está dentro de `src/reproduction/` y `src/nutrition/`. Además, como coordinador del repositorio, los archivos de configuración raíz (`package.json`, `.gitignore`, `README.md`, `app.module.ts`) y `src/common/` cuando haga falta.
+
+> **Estado: las tareas C1 a C4 están terminadas y commiteadas.** La documentación completa de endpoints está en [`src/reproduction/README.md`](src/reproduction/README.md) y [`src/nutrition/README.md`](src/nutrition/README.md). Lo que sigue abajo se conserva como referencia de lo que se pidió; úsenlo como ejemplo del nivel de detalle esperado en sus propios módulos.
 
 #### Tarea C1 — Celos y DTOs completos de reproducción (`src/reproduction/`)
 
@@ -392,7 +394,7 @@ Commits mínimos: 4.
    - `costPerLiter = totalCost / litersProduced` (si `litersProduced = 0` → `null`, no división por cero)
    - `averagePricePerLiter = milkIncome / litersProduced` (igual, `null` si 0)
    - `marginPerLiter = averagePricePerLiter - costPerLiter`
-3. `GET /finance/summary?farmId=&from=&to=` → `FinanceSummary`: `totalIncome`, `totalExpenses`, `netResult`, `incomeByCategory[]`, `expensesByCategory[]`, `litersProduced`. `farmId` obligatorio. Para incluir registros que tienen `animalId` pero no `farmId`, une con `animal` (`relations: ['animal']`) y filtra por `animal.farmId`.
+3. `GET /finance/summary?farmId=&from=&to=` → `FinanceSummary`: `totalIncome`, `totalExpenses`, `netResult`, `incomeByCategory[]`, `expensesByCategory[]`, `litersProduced`. `farmId` obligatorio. Para incluir registros que tienen `animalId` pero no `farmId`, une con `animal` (`relations: { animal: true }`) y filtra con `where: { animal: { farmId } }`.
 4. `calculateAnimalProfitability` (el ROI actual) debe aceptar `from`/`to` y sumar también `feedCost` a los gastos.
 5. `src/finance/README.md`.
 
@@ -409,8 +411,8 @@ Esto es lo único que un módulo puede asumir de otro. Si necesitas algo que no 
 | Animals (Gabo) | `AnimalsService.findByTagId(tagId)` | Todos | Ya existe. Lanza `NotFoundException`. |
 | Animals (Gabo) | `AnimalsService.findByFarm(farmId)` y `countByFarm(farmId, status?)` | Health, Finance | Tarea G4. |
 | Animals (Gabo) | Columna `Animal.farmId` | Reproduction, Nutrition, Health, Finance | Ya existe. Se usa con `relations: ['animal']` para filtrar por finca. |
-| Nutrition (Cristian) | `NutritionService.getFeedCostForAnimal(animalId: string, from?: string, to?: string)` | Finance | Devuelve `Promise<{ animalId; period: { from; to }; periodDays; dailyFeedCost: number; periodFeedCost: number; diets: NutritionRecord[] }>`. Si el animal no tiene dietas devuelve ceros, **no** lanza error. |
-| Reproduction (Cristian) | `ReproductionService.getReproductiveStatus(animalId)` | Finance (futuro), Frontend | Tarea C2. |
+| Nutrition (Cristian) | `NutritionService.getFeedCostForAnimal(animalId: string, from?: string, to?: string)` | Finance | **Listo.** Devuelve `Promise<FeedCostReport>` (ver `src/nutrition/interfaces/nutrition-reports.interface.ts`): `{ animalId; period: { from; to }; periodDays; dailyFeedCost; periodFeedCost; dietsWithoutCost; diets: FeedCostDietLine[] }`. Finanzas usa `periodFeedCost`. Si el animal no tiene dietas devuelve ceros, **no** lanza error. `from`/`to` por defecto: últimos 30 días. |
+| Reproduction (Cristian) | `ReproductionService.getReproductiveStatus(animalId)` | Finance (futuro), Frontend | **Listo.** Devuelve `Promise<ReproductiveStatusReport>` con `status: 'NO_RECORDS' \| 'OPEN' \| 'INSEMINATED' \| 'PREGNANT'`. |
 | Farms (Carlos) | Entidad `Farm` y `FarmsService` | Todos | Ya existen. Solo lectura desde otros módulos. |
 
 Reglas de importación entre módulos:
