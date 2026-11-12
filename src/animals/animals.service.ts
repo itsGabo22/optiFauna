@@ -17,7 +17,10 @@ export class AnimalsService {
     return this.animalRepository.save(animal);
   }
 
-  async getAnimals(farmId?: string, page: number = 1): Promise<{ data: Animal[], total: number }> {
+  async getAnimals(
+    farmId?: string,
+    page: number = 1,
+  ): Promise<{ data: Animal[]; total: number }> {
     const limit = 10;
     const where = farmId ? { farmId } : {};
     const [data, total] = await this.animalRepository.findAndCount({
@@ -36,7 +39,10 @@ export class AnimalsService {
     return animal;
   }
 
-  async updateAnimalData(tagId: string, updateAnimalDto: UpdateAnimalDto): Promise<Animal> {
+  async updateAnimalData(
+    tagId: string,
+    updateAnimalDto: UpdateAnimalDto,
+  ): Promise<Animal> {
     const animal = await this.findByTagId(tagId);
     Object.assign(animal, updateAnimalDto);
     return this.animalRepository.save(animal);
