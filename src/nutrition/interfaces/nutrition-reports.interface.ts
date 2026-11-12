@@ -1,3 +1,12 @@
+import { NutritionRecord } from '../entities/nutrition-record.entity';
+
+export interface ConsumptionReport {
+  farmId: string | undefined;
+  activeDietPlansCount: number;
+  calculatedTotalDailyKg: number;
+  diets: NutritionRecord[];
+}
+
 export interface FeedCostDietLine {
   dietId: string;
   dietName: string;

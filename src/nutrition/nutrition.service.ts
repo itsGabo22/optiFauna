@@ -25,6 +25,7 @@ import {
   toIsoDate,
 } from '../common/utils/date.utils';
 import {
+  ConsumptionReport,
   FeedCostDietLine,
   FeedCostReport,
 } from './interfaces/nutrition-reports.interface';
@@ -173,7 +174,7 @@ export class NutritionService {
     return Math.round(value * 100) / 100;
   }
 
-  async calculateConsumption(farmId: string): Promise<any> {
+  async calculateConsumption(farmId?: string): Promise<ConsumptionReport> {
     const records = await this.nutritionRepository.find({
       where: farmId ? { farmId } : {},
     });
@@ -249,7 +250,9 @@ export class NutritionService {
   private async findFeedItemOrFail(id: string): Promise<FeedInventory> {
     const item = await this.feedInventoryRepository.findOne({ where: { id } });
     if (!item) {
-      throw new NotFoundException(`Feed inventory item with id ${id} not found`);
+      throw new NotFoundException(
+        `Feed inventory item with id ${id} not found`,
+      );
     }
     return item;
   }
