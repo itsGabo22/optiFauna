@@ -4,6 +4,7 @@ import { InseminationDto } from './dto/insemination.dto';
 import { PregnancyCheckDto } from './dto/pregnancy-check.dto';
 import { BirthDto } from './dto/birth.dto';
 import { HeatDto } from './dto/heat.dto';
+import { AbortionDto } from './dto/abortion.dto';
 
 @Controller('reproduction')
 export class ReproductionController {
@@ -27,6 +28,11 @@ export class ReproductionController {
   @Post('birth')
   async logBirth(@Body() birthDto: BirthDto) {
     return this.reproductionService.logBirth(birthDto);
+  }
+
+  @Post('abortion')
+  async logAbortion(@Body() abortionDto: AbortionDto) {
+    return this.reproductionService.logAbortion(abortionDto);
   }
 
   @Get('due-date/:animalId')
