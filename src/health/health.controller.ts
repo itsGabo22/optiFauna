@@ -39,7 +39,11 @@ export class HealthController {
   }
 
   @Get('reports/ica')
-  async generateICAReport(@Query('farmId') farmId: string) {
-    return this.healthService.generateICAReport(farmId);
+  async generateICAReport(
+    @Query('farmId') farmId?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    return this.healthService.generateICAReport(farmId, from, to);
   }
 }
