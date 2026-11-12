@@ -88,6 +88,21 @@ export class NutritionService {
     return this.feedInventoryRepository.save(item);
   }
 
+  /** Items whose stock is at or below their alert threshold. */
+  async getLowStockAlerts(farmId?: string): Promise<FeedInventory[]> {
+    const query = this.feedInventoryRepository
+      .createQueryBuilder('item')
+      .where('item.minStockAlertKg IS NOT NULL')
+      .andWhere('item.currentStockKg <= item.minStockAlertKg')
+      .orderBy('item.currentStockKg', 'ASC');
+
+    if (farmId) {
+      query.andWhere('item.farmId = :farmId', { farmId });
+    }
+
+    return query.getMany();
+  }
+
   private async findFeedItemOrFail(id: string): Promise<FeedInventory> {
     const item = await this.feedInventoryRepository.findOne({ where: { id } });
     if (!item) {
