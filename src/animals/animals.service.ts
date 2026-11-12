@@ -84,4 +84,12 @@ export class AnimalsService {
     animal.statusReason = changeStatusDto.reason;
     return this.animalRepository.save(animal);
   }
+
+  async getOffspring(tagId: string): Promise<Animal[]> {
+    const parent = await this.findByTagId(tagId);
+    return this.animalRepository.find({
+      where: [{ motherId: parent.id }, { fatherId: parent.id }],
+      order: { birthDate: 'DESC', createdAt: 'DESC' },
+    });
+  }
 }

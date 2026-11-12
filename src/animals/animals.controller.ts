@@ -28,6 +28,11 @@ export class AnimalsController {
     return this.animalsService.getAnimals(query);
   }
 
+  @Get(':tagId/offspring')
+  async getOffspring(@Param('tagId') tagId: string) {
+    return this.animalsService.getOffspring(tagId);
+  }
+
   @Get(':tagId')
   async findByTagId(@Param('tagId') tagId: string) {
     return this.animalsService.findByTagId(tagId);
