@@ -6,7 +6,7 @@ import { HeatDto } from './dto/heat.dto';
 import { AbortionDto } from './dto/abortion.dto';
 import { HistoryQueryDto } from './dto/history-query.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { LessThanOrEqual, Repository } from 'typeorm';
 import {
   ReproductionRecord,
   ReproductionEventType,
@@ -56,13 +56,36 @@ export class ReproductionService {
   async logPregnancyCheck(
     pregnancyCheckDto: PregnancyCheckDto,
   ): Promise<ReproductionRecord> {
+    const result = pregnancyCheckDto.isPregnant
+      ? PregnancyResult.CONFIRMED_POSITIVE
+      : PregnancyResult.CONFIRMED_NEGATIVE;
+
+    // The check resolves the most recent insemination that is still pending,
+    // so the insemination record carries the final result and its due date
+    // can be used for upcoming-birth alerts.
+    const pendingInsemination = await this.reproductionRepository.findOne({
+      where: {
+        animalId: pregnancyCheckDto.animalId,
+        eventType: ReproductionEventType.INSEMINATION,
+        pregnancyResult: PregnancyResult.PENDING,
+        eventDate: LessThanOrEqual(pregnancyCheckDto.date),
+      },
+      order: { eventDate: 'DESC' },
+    });
+
+    if (pendingInsemination) {
+      pendingInsemination.pregnancyResult = result;
+      await this.reproductionRepository.save(pendingInsemination);
+    }
+
     const record = this.reproductionRepository.create({
       animalId: pregnancyCheckDto.animalId,
       eventType: ReproductionEventType.PREGNANCY_CHECK,
       eventDate: pregnancyCheckDto.date,
-      pregnancyResult: pregnancyCheckDto.isPregnant
-        ? PregnancyResult.CONFIRMED_POSITIVE
-        : PregnancyResult.CONFIRMED_NEGATIVE,
+      pregnancyResult: result,
+      estimatedDueDate: pregnancyCheckDto.isPregnant
+        ? pendingInsemination?.estimatedDueDate
+        : undefined,
       details: pregnancyCheckDto.isPregnant
         ? 'Pregnancy confirmed positive'
         : 'Pregnancy confirmed negative',
