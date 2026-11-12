@@ -1,7 +1,8 @@
-import { Controller, Post, Get, Body, Query } from '@nestjs/common';
+import { Controller, Post, Get, Body, Query, Param } from '@nestjs/common';
 import { NutritionService } from './nutrition.service';
 import { DietDto } from './dto/diet.dto';
 import { CreateFeedInventoryDto } from './dto/inventory.dto';
+import { StockMovementDto } from './dto/stock-movement.dto';
 
 @Controller('nutrition')
 export class NutritionController {
@@ -15,6 +16,22 @@ export class NutritionController {
   @Post('inventory')
   async createFeedItem(@Body() dto: CreateFeedInventoryDto) {
     return this.nutritionService.createFeedItem(dto);
+  }
+
+  @Post('inventory/:id/restock')
+  async restockFeedItem(
+    @Param('id') id: string,
+    @Body() dto: StockMovementDto,
+  ) {
+    return this.nutritionService.restockFeedItem(id, dto);
+  }
+
+  @Post('inventory/:id/consume')
+  async consumeFeedItem(
+    @Param('id') id: string,
+    @Body() dto: StockMovementDto,
+  ) {
+    return this.nutritionService.consumeFeedItem(id, dto);
   }
 
   @Get('inventory')
