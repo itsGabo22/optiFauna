@@ -43,11 +43,17 @@ export class HealthService {
   async registerTreatment(treatmentDto: TreatmentDto): Promise<HealthRecord> {
     const record = this.healthRecordRepository.create({
       animalId: treatmentDto.animalId,
+      farmId: treatmentDto.farmId,
       type: HealthRecordType.TREATMENT,
       title: treatmentDto.treatmentName,
-      medication: treatmentDto.treatmentName,
+      medication: treatmentDto.medication ?? treatmentDto.treatmentName,
+      dosage: treatmentDto.dosage,
+      cost: treatmentDto.cost,
       date: treatmentDto.date,
-      description: `Treatment: ${treatmentDto.treatmentName}`,
+      nextDueDate: treatmentDto.nextDueDate,
+      veterinarian: treatmentDto.veterinarian,
+      description:
+        treatmentDto.description ?? `Treatment: ${treatmentDto.treatmentName}`,
     });
     return this.healthRecordRepository.save(record);
   }
