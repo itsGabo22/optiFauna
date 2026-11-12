@@ -22,10 +22,22 @@ export class NutritionService {
   ) {}
 
   async assignDiet(dietDto: DietDto): Promise<NutritionRecord> {
+    if (!dietDto.animalId && !dietDto.animalGroupId) {
+      throw new BadRequestException(
+        'Either animalId or animalGroupId is required',
+      );
+    }
+    if (
+      dietDto.startDate &&
+      dietDto.endDate &&
+      dietDto.endDate < dietDto.startDate
+    ) {
+      throw new BadRequestException('endDate must be on or after startDate');
+    }
+
     const record = this.nutritionRepository.create({
-      animalGroupId: dietDto.animalGroupId,
-      dietName: dietDto.dietName,
-      dailyAmountKg: dietDto.dailyAmountKg,
+      ...dietDto,
+      startDate: dietDto.startDate ?? todayIso(),
     });
     return this.nutritionRepository.save(record);
   }
