@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateFarmDto } from './dto/create-farm.dto';
+import { UpdateFarmDto } from './dto/update-farm.dto';
 import { AssignWorkerDto } from './dto/assign-worker.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -62,14 +63,17 @@ export class FarmsService {
     };
   }
 
+  async updateFarm(id: string, updateFarmDto: UpdateFarmDto): Promise<Farm> {
+    const farm = await this.findFarmOrFail(id);
+    Object.assign(farm, updateFarmDto);
+    return this.farmRepository.save(farm);
+  }
+
   async assignWorker(
     farmId: string,
     assignWorkerDto: AssignWorkerDto,
   ): Promise<FarmWorker> {
-    const farm = await this.farmRepository.findOne({ where: { id: farmId } });
-    if (!farm) {
-      throw new NotFoundException(`Farm with id ${farmId} not found`);
-    }
+    await this.findFarmOrFail(farmId);
 
     const worker = this.farmWorkerRepository.create({
       farmId,
@@ -78,5 +82,13 @@ export class FarmsService {
     });
 
     return this.farmWorkerRepository.save(worker);
+  }
+
+  private async findFarmOrFail(id: string): Promise<Farm> {
+    const farm = await this.farmRepository.findOne({ where: { id } });
+    if (!farm) {
+      throw new NotFoundException(`Farm with id ${id} not found`);
+    }
+    return farm;
   }
 }
