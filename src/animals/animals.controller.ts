@@ -1,7 +1,18 @@
-import { Controller, Get, Post, Body, Put, Param, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Put,
+  Patch,
+  Param,
+  Query,
+} from '@nestjs/common';
 import { AnimalsService } from './animals.service';
 import { CreateAnimalDto } from './dto/create-animal.dto';
 import { UpdateAnimalDto } from './dto/update-animal.dto';
+import { QueryAnimalsDto } from './dto/query-animals.dto';
+import { ChangeStatusDto } from './dto/change-status.dto';
 
 @Controller('animals')
 export class AnimalsController {
@@ -13,12 +24,13 @@ export class AnimalsController {
   }
 
   @Get()
-  async getAnimals(
-    @Query('farmId') farmId?: string,
-    @Query('page') page?: string,
-  ) {
-    const pageNumber = page ? parseInt(page, 10) : 1;
-    return this.animalsService.getAnimals(farmId, pageNumber);
+  async getAnimals(@Query() query: QueryAnimalsDto) {
+    return this.animalsService.getAnimals(query);
+  }
+
+  @Get(':tagId/offspring')
+  async getOffspring(@Param('tagId') tagId: string) {
+    return this.animalsService.getOffspring(tagId);
   }
 
   @Get(':tagId')
@@ -32,5 +44,13 @@ export class AnimalsController {
     @Body() updateAnimalDto: UpdateAnimalDto,
   ) {
     return this.animalsService.updateAnimalData(tagId, updateAnimalDto);
+  }
+
+  @Patch(':tagId/status')
+  async changeStatus(
+    @Param('tagId') tagId: string,
+    @Body() changeStatusDto: ChangeStatusDto,
+  ) {
+    return this.animalsService.changeStatus(tagId, changeStatusDto);
   }
 }

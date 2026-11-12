@@ -1,9 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateAnimalDto } from './dto/create-animal.dto';
 import { UpdateAnimalDto } from './dto/update-animal.dto';
+import { QueryAnimalsDto } from './dto/query-animals.dto';
+import { ChangeStatusDto } from './dto/change-status.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Animal } from './entities/animal.entity';
+import { FindOptionsWhere, Repository } from 'typeorm';
+import { Animal, AnimalStatus } from './entities/animal.entity';
 
 @Injectable()
 export class AnimalsService {
@@ -17,13 +23,33 @@ export class AnimalsService {
     return this.animalRepository.save(animal);
   }
 
-  async getAnimals(farmId?: string, page: number = 1): Promise<{ data: Animal[], total: number }> {
+  async getAnimals(
+    query: QueryAnimalsDto = {},
+  ): Promise<{ data: Animal[]; total: number }> {
     const limit = 10;
-    const where = farmId ? { farmId } : {};
+    const page = query.page ?? 1;
+    const where: FindOptionsWhere<Animal> = {};
+
+    if (query.farmId) {
+      where.farmId = query.farmId;
+    }
+    if (query.sex) {
+      where.sex = query.sex;
+    }
+    if (query.species) {
+      where.species = query.species;
+    }
+    if (!query.status) {
+      where.status = AnimalStatus.ACTIVE;
+    } else if (query.status !== 'ALL') {
+      where.status = query.status;
+    }
+
     const [data, total] = await this.animalRepository.findAndCount({
       where,
       skip: (page - 1) * limit,
       take: limit,
+      order: { createdAt: 'DESC' },
     });
     return { data, total };
   }
@@ -36,9 +62,50 @@ export class AnimalsService {
     return animal;
   }
 
-  async updateAnimalData(tagId: string, updateAnimalDto: UpdateAnimalDto): Promise<Animal> {
+  async updateAnimalData(
+    tagId: string,
+    updateAnimalDto: UpdateAnimalDto,
+  ): Promise<Animal> {
     const animal = await this.findByTagId(tagId);
     Object.assign(animal, updateAnimalDto);
     return this.animalRepository.save(animal);
+  }
+
+  async changeStatus(
+    tagId: string,
+    changeStatusDto: ChangeStatusDto,
+  ): Promise<Animal> {
+    if (changeStatusDto.status === AnimalStatus.ACTIVE) {
+      throw new BadRequestException('status cannot be ACTIVE');
+    }
+    const animal = await this.findByTagId(tagId);
+    animal.status = changeStatusDto.status;
+    animal.statusChangedAt = changeStatusDto.date;
+    animal.statusReason = changeStatusDto.reason;
+    return this.animalRepository.save(animal);
+  }
+
+  async getOffspring(tagId: string): Promise<Animal[]> {
+    const parent = await this.findByTagId(tagId);
+    return this.animalRepository.find({
+      where: [{ motherId: parent.id }, { fatherId: parent.id }],
+      order: { birthDate: 'DESC', createdAt: 'DESC' },
+    });
+  }
+
+  async findByFarm(farmId: string): Promise<Animal[]> {
+    return this.animalRepository.find({
+      where: { farmId },
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async countByFarm(
+    farmId: string,
+    status: AnimalStatus = AnimalStatus.ACTIVE,
+  ): Promise<number> {
+    return this.animalRepository.count({
+      where: { farmId, status },
+    });
   }
 }

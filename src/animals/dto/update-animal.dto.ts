@@ -1,4 +1,10 @@
-import { IsString, IsOptional, IsDateString, IsEnum, IsNumber } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsDateString,
+  IsEnum,
+  IsNumber,
+} from 'class-validator';
 import { AnimalSex, AnimalStatus } from '../entities/animal.entity';
 
 export class UpdateAnimalDto {
