@@ -249,8 +249,8 @@ Estado del código al momento de escribir esto (rama `main`):
 
 | Módulo | Entidades | Endpoints | README | Estado |
 | :--- | :---: | :---: | :---: | :--- |
-| Animals | ✅ | 4 | ✅ | Base lista, faltan filtros y bajas |
-| Health | ✅ | 3 | ❌ | DTOs incompletos, reporte ICA es un placeholder |
+| Animals | ✅ | 6 | ✅ | Completo: filtros por estado/sexo/especie, baja trazable y consulta de crías |
+| Health | ✅ | 6 | ✅ | Completo: vacunas, tratamientos, desparasitaciones, historial, alertas y reporte ICA real |
 | Reproduction | ✅ | 10 | ✅ | Completo: celos, abortos, historial, estado, días abiertos, partos próximos |
 | Nutrition | ✅ | 9 | ✅ | Completo: inventario con movimientos y alertas, dietas por animal, costo de alimentación |
 | Finance | ✅ | 3 | ❌ | DTOs incompletos, sin costo por litro |
@@ -261,6 +261,8 @@ Estado del código al momento de escribir esto (rama `main`):
 ### 5.1 Gabo — `AnimalsModule` y `HealthModule`
 
 Archivos permitidos: todo lo que está dentro de `src/animals/` y `src/health/`. Nada más.
+
+> **Estado: las tareas G1 a G4 están terminadas y commiteadas.** La documentación completa de endpoints está en [`src/animals/README.md`](src/animals/README.md) y [`src/health/README.md`](src/health/README.md).
 
 #### Tarea G1 — Filtros y baja de animales (`src/animals/`)
 
@@ -408,9 +410,9 @@ Esto es lo único que un módulo puede asumir de otro. Si necesitas algo que no 
 
 | Quién lo provee | Qué | Quién lo consume | Firma / forma exacta |
 | :--- | :--- | :--- | :--- |
-| Animals (Gabo) | `AnimalsService.findByTagId(tagId)` | Todos | Ya existe. Lanza `NotFoundException`. |
-| Animals (Gabo) | `AnimalsService.findByFarm(farmId)` y `countByFarm(farmId, status?)` | Health, Finance | Tarea G4. |
-| Animals (Gabo) | Columna `Animal.farmId` | Reproduction, Nutrition, Health, Finance | Ya existe. Se usa con `relations: ['animal']` para filtrar por finca. |
+| Animals (Gabo) | `AnimalsService.findByTagId(tagId)` | Todos | **Listo.** Lanza `NotFoundException`. |
+| Animals (Gabo) | `AnimalsService.findByFarm(farmId)` y `countByFarm(farmId, status?)` | Health, Finance | **Listo.** Devuelven `Promise<Animal[]>` y `Promise<number>` (`status` por defecto `ACTIVE`). |
+| Animals (Gabo) | Columna `Animal.farmId` | Reproduction, Nutrition, Health, Finance | Ya existe. Se usa con `relations: { animal: true }` para filtrar por finca. |
 | Nutrition (Cristian) | `NutritionService.getFeedCostForAnimal(animalId: string, from?: string, to?: string)` | Finance | **Listo.** Devuelve `Promise<FeedCostReport>` (ver `src/nutrition/interfaces/nutrition-reports.interface.ts`): `{ animalId; period: { from; to }; periodDays; dailyFeedCost; periodFeedCost; dietsWithoutCost; diets: FeedCostDietLine[] }`. Finanzas usa `periodFeedCost`. Si el animal no tiene dietas devuelve ceros, **no** lanza error. `from`/`to` por defecto: últimos 30 días. |
 | Reproduction (Cristian) | `ReproductionService.getReproductiveStatus(animalId)` | Finance (futuro), Frontend | **Listo.** Devuelve `Promise<ReproductiveStatusReport>` con `status: 'NO_RECORDS' \| 'OPEN' \| 'INSEMINATED' \| 'PREGNANT'`. |
 | Farms (Carlos) | Entidad `Farm` y `FarmsService` | Todos | Ya existen. Solo lectura desde otros módulos. |
