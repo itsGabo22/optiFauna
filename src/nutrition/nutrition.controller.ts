@@ -3,6 +3,7 @@ import { NutritionService } from './nutrition.service';
 import { DietDto } from './dto/diet.dto';
 import { CreateFeedInventoryDto } from './dto/inventory.dto';
 import { StockMovementDto } from './dto/stock-movement.dto';
+import { DietsQueryDto } from './dto/diets-query.dto';
 
 @Controller('nutrition')
 export class NutritionController {
@@ -11,6 +12,11 @@ export class NutritionController {
   @Post('diets')
   async assignDiet(@Body() dietDto: DietDto) {
     return this.nutritionService.assignDiet(dietDto);
+  }
+
+  @Get('diets')
+  async getDiets(@Query() query: DietsQueryDto) {
+    return this.nutritionService.getDiets(query);
   }
 
   @Post('inventory')

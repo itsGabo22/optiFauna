@@ -6,8 +6,15 @@ import {
 import { DietDto } from './dto/diet.dto';
 import { CreateFeedInventoryDto } from './dto/inventory.dto';
 import { StockMovementDto } from './dto/stock-movement.dto';
+import { DietsQueryDto } from './dto/diets-query.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import {
+  FindOptionsWhere,
+  IsNull,
+  LessThanOrEqual,
+  MoreThanOrEqual,
+  Repository,
+} from 'typeorm';
 import { NutritionRecord } from './entities/nutrition-record.entity';
 import { FeedInventory } from './entities/feed-inventory.entity';
 import { todayIso } from '../common/utils/date.utils';
@@ -40,6 +47,33 @@ export class NutritionService {
       startDate: dietDto.startDate ?? todayIso(),
     });
     return this.nutritionRepository.save(record);
+  }
+
+  async getDiets(query: DietsQueryDto = {}): Promise<NutritionRecord[]> {
+    const base: FindOptionsWhere<NutritionRecord> = {};
+    if (query.farmId) base.farmId = query.farmId;
+    if (query.animalId) base.animalId = query.animalId;
+    if (query.animalGroupId) base.animalGroupId = query.animalGroupId;
+
+    const order = { startDate: 'DESC' as const, createdAt: 'DESC' as const };
+
+    if (!query.active) {
+      return this.nutritionRepository.find({ where: base, order });
+    }
+
+    // Active = already started and either open-ended or not yet ended.
+    const today = todayIso();
+    return this.nutritionRepository.find({
+      where: [
+        { ...base, startDate: LessThanOrEqual(today), endDate: IsNull() },
+        {
+          ...base,
+          startDate: LessThanOrEqual(today),
+          endDate: MoreThanOrEqual(today),
+        },
+      ],
+      order,
+    });
   }
 
   async calculateConsumption(farmId: string): Promise<any> {
