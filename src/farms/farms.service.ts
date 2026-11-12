@@ -104,6 +104,57 @@ export class FarmsService {
     return this.farmWorkerRepository.save(worker);
   }
 
+  async getWorkers(farmId: string): Promise<FarmWorker[]> {
+    await this.findFarmOrFail(farmId);
+    return this.farmWorkerRepository.find({
+      where: { farmId },
+      order: { assignedAt: 'ASC' },
+    });
+  }
+
+  async removeWorker(
+    farmId: string,
+    workerId: string,
+  ): Promise<RemovedWorkerResult> {
+    await this.findFarmOrFail(farmId);
+
+    const isUuid =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        workerId,
+      );
+
+    let worker = isUuid
+      ? await this.farmWorkerRepository.findOne({
+          where: { id: workerId, farmId },
+        })
+      : null;
+
+    if (!worker) {
+      worker = await this.farmWorkerRepository.findOne({
+        where: { userId: workerId, farmId },
+      });
+    }
+
+    if (!worker) {
+      throw new NotFoundException(
+        `Worker ${workerId} not found in farm ${farmId}`,
+      );
+    }
+
+    if (worker.role === WorkerRole.OWNER) {
+      await this.ensureAnotherOwnerExists(farmId);
+    }
+
+    await this.farmWorkerRepository.remove(worker);
+
+    return {
+      deleted: true,
+      id: worker.id,
+      farmId,
+      userId: worker.userId,
+    };
+  }
+
   private async ensureAnotherOwnerExists(farmId: string): Promise<void> {
     const ownersCount = await this.farmWorkerRepository.count({
       where: { farmId, role: WorkerRole.OWNER },

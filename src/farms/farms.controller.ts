@@ -1,4 +1,13 @@
-import { Controller, Post, Get, Put, Body, Param, Query } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Put,
+  Delete,
+  Body,
+  Param,
+  Query,
+} from '@nestjs/common';
 import { FarmsService } from './farms.service';
 import { CreateFarmDto } from './dto/create-farm.dto';
 import { UpdateFarmDto } from './dto/update-farm.dto';
@@ -37,5 +46,18 @@ export class FarmsController {
     @Body() assignWorkerDto: AssignWorkerDto,
   ) {
     return this.farmsService.assignWorker(farmId, assignWorkerDto);
+  }
+
+  @Get(':id/workers')
+  async getWorkers(@Param('id') farmId: string) {
+    return this.farmsService.getWorkers(farmId);
+  }
+
+  @Delete(':id/workers/:workerId')
+  async removeWorker(
+    @Param('id') farmId: string,
+    @Param('workerId') workerId: string,
+  ) {
+    return this.farmsService.removeWorker(farmId, workerId);
   }
 }
