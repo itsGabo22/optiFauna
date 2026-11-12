@@ -32,7 +32,10 @@ export class FarmsService {
     return savedFarm;
   }
 
-  async assignWorker(farmId: string, assignWorkerDto: AssignWorkerDto): Promise<FarmWorker> {
+  async assignWorker(
+    farmId: string,
+    assignWorkerDto: AssignWorkerDto,
+  ): Promise<FarmWorker> {
     const farm = await this.farmRepository.findOne({ where: { id: farmId } });
     if (!farm) {
       throw new NotFoundException(`Farm with id ${farmId} not found`);
