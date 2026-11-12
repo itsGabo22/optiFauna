@@ -1,8 +1,18 @@
-import { Controller, Get, Post, Body, Put, Param, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Put,
+  Patch,
+  Param,
+  Query,
+} from '@nestjs/common';
 import { AnimalsService } from './animals.service';
 import { CreateAnimalDto } from './dto/create-animal.dto';
 import { UpdateAnimalDto } from './dto/update-animal.dto';
 import { QueryAnimalsDto } from './dto/query-animals.dto';
+import { ChangeStatusDto } from './dto/change-status.dto';
 
 @Controller('animals')
 export class AnimalsController {
@@ -29,5 +39,13 @@ export class AnimalsController {
     @Body() updateAnimalDto: UpdateAnimalDto,
   ) {
     return this.animalsService.updateAnimalData(tagId, updateAnimalDto);
+  }
+
+  @Patch(':tagId/status')
+  async changeStatus(
+    @Param('tagId') tagId: string,
+    @Body() changeStatusDto: ChangeStatusDto,
+  ) {
+    return this.animalsService.changeStatus(tagId, changeStatusDto);
   }
 }
