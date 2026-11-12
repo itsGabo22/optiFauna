@@ -6,6 +6,7 @@ import { BirthDto } from './dto/birth.dto';
 import { HeatDto } from './dto/heat.dto';
 import { AbortionDto } from './dto/abortion.dto';
 import { HistoryQueryDto } from './dto/history-query.dto';
+import { UpcomingBirthsQueryDto } from './dto/upcoming-births-query.dto';
 
 @Controller('reproduction')
 export class ReproductionController {
@@ -34,6 +35,11 @@ export class ReproductionController {
   @Post('abortion')
   async logAbortion(@Body() abortionDto: AbortionDto) {
     return this.reproductionService.logAbortion(abortionDto);
+  }
+
+  @Get('upcoming-births')
+  async getUpcomingBirths(@Query() query: UpcomingBirthsQueryDto) {
+    return this.reproductionService.getUpcomingBirths(query);
   }
 
   @Get('history/:animalId')
