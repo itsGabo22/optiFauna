@@ -17,7 +17,17 @@ import {
 } from 'typeorm';
 import { NutritionRecord } from './entities/nutrition-record.entity';
 import { FeedInventory } from './entities/feed-inventory.entity';
-import { todayIso } from '../common/utils/date.utils';
+import {
+  addDays,
+  daysBetween,
+  overlapDays,
+  todayIso,
+  toIsoDate,
+} from '../common/utils/date.utils';
+import {
+  FeedCostDietLine,
+  FeedCostReport,
+} from './interfaces/nutrition-reports.interface';
 
 @Injectable()
 export class NutritionService {
@@ -74,6 +84,93 @@ export class NutritionService {
       ],
       order,
     });
+  }
+
+  /**
+   * Feed cost of one animal over a period (default: last 30 days, both ends
+   * inclusive). Diets without costPerKg are listed but add 0 to the totals.
+   * Never throws for an animal without diets: it returns zeros, as agreed
+   * with FinanceModule (see root README, "Contratos entre módulos").
+   */
+  async getFeedCostForAnimal(
+    animalId: string,
+    from?: string,
+    to?: string,
+  ): Promise<FeedCostReport> {
+    const today = todayIso();
+    const periodTo = to ? toIsoDate(to) : today;
+    const periodFrom = from ? toIsoDate(from) : addDays(periodTo, -29);
+
+    if (periodFrom > periodTo) {
+      throw new BadRequestException('from must be on or before to');
+    }
+
+    const diets = await this.nutritionRepository.find({
+      where: { animalId },
+      order: { startDate: 'ASC' },
+    });
+
+    let dailyFeedCost = 0;
+    let periodFeedCost = 0;
+    let dietsWithoutCost = 0;
+
+    const lines: FeedCostDietLine[] = diets.map((diet) => {
+      const startDate = toIsoDate(diet.startDate ?? diet.createdAt);
+      const endDate = diet.endDate ? toIsoDate(diet.endDate) : null;
+      const dailyAmountKg = Number(diet.dailyAmountKg) || 0;
+      const costPerKg =
+        diet.costPerKg === null || diet.costPerKg === undefined
+          ? null
+          : Number(diet.costPerKg);
+
+      if (costPerKg === null) {
+        dietsWithoutCost += 1;
+      }
+
+      const dailyCost =
+        costPerKg === null ? 0 : this.round2(dailyAmountKg * costPerKg);
+      const daysInPeriod = overlapDays(
+        startDate,
+        endDate ?? '9999-12-31',
+        periodFrom,
+        periodTo,
+      );
+      const periodCost = this.round2(dailyCost * daysInPeriod);
+      const activeToday =
+        startDate <= today && (endDate === null || endDate >= today);
+
+      periodFeedCost += periodCost;
+      if (activeToday) {
+        dailyFeedCost += dailyCost;
+      }
+
+      return {
+        dietId: diet.id,
+        dietName: diet.dietName,
+        dailyAmountKg,
+        costPerKg,
+        dailyCost,
+        startDate,
+        endDate,
+        daysInPeriod,
+        periodCost,
+        activeToday,
+      };
+    });
+
+    return {
+      animalId,
+      period: { from: periodFrom, to: periodTo },
+      periodDays: daysBetween(periodFrom, periodTo) + 1,
+      dailyFeedCost: this.round2(dailyFeedCost),
+      periodFeedCost: this.round2(periodFeedCost),
+      dietsWithoutCost,
+      diets: lines,
+    };
+  }
+
+  private round2(value: number): number {
+    return Math.round(value * 100) / 100;
   }
 
   async calculateConsumption(farmId: string): Promise<any> {

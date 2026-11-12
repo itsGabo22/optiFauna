@@ -50,6 +50,15 @@ export class NutritionController {
     return this.nutritionService.getInventory(farmId);
   }
 
+  @Get('cost/:animalId')
+  async getFeedCost(
+    @Param('animalId') animalId: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    return this.nutritionService.getFeedCostForAnimal(animalId, from, to);
+  }
+
   @Get('consumption')
   async getConsumption(@Query('farmId') farmId: string) {
     return this.nutritionService.calculateConsumption(farmId);
